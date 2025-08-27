@@ -200,53 +200,25 @@ public class JwtUtil {
     }
     
     /**
-     * 验证Token格式和签名
+     * 验证Token（不需要UserDetails）
      * @param token JWT Token
      * @return 是否有效
-     * @throws IllegalArgumentException 当token为null时
      */
-    public Boolean validateTokenFormat(String token) {
-        if (token == null) {
-            throw new IllegalArgumentException("Token不能为null");
-        }
+    public Boolean validateToken(String token) {
         try {
             extractAllClaims(token);
-            return true;
+            return !isTokenExpired(token);
         } catch (Exception e) {
-            log.warn("Token格式验证失败: {}", e.getMessage());
+            log.warn("Token验证失败: {}", e.getMessage());
             return false;
         }
     }
     
     /**
-     * 获取Token剩余有效时间（秒）
-     * @param token JWT Token
-     * @return 剩余有效时间
-     */
-    public Long getTokenRemainingTime(String token) {
-        try {
-            Date expiration = extractExpiration(token);
-            long remainingTime = expiration.getTime() - System.currentTimeMillis();
-            return Math.max(0, remainingTime / 1000);
-        } catch (Exception e) {
-            return 0L;
-        }
-    }
-    
-    /**
-     * 获取Token过期时间
-     * @param token JWT Token
+     * 获取Token过期时间（毫秒）
      * @return 过期时间
      */
-    public Date getExpirationTime(String token) {
-        return extractExpiration(token);
-    }
-    
-    /**
-     * 获取访问Token过期时间（秒）
-     * @return 过期时间
-     */
-    public Long getExpirationTime() {
-        return accessTokenExpiration / 1000;
+    public Long getAccessTokenExpiration() {
+        return accessTokenExpiration;
     }
 }

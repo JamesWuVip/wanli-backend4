@@ -115,10 +115,10 @@ public class SecurityConfig {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/health",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**"
+                                "/api/swagger-ui/**",
+                                "/api/v3/api-docs/**",
+                                "/api/swagger-resources/**",
+                                "/api/webjars/**"
                         ).permitAll()
                         
                         // 管理员接口
