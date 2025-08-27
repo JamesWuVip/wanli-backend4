@@ -11,13 +11,13 @@ spring:
   
   # 数据源配置
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wanli_db}
-    username: ${SPRING_DATASOURCE_USERNAME:wanli_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:wanli_password}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wanli_backend_dev}
+    username: ${SPRING_DATASOURCE_USERNAME:dev_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
     driver-class-name: org.postgresql.Driver
     hikari:
-      connection-timeout: 30000
-      idle-timeout: 600000
+      connection-timeout: 20000
+      idle-timeout: 300000
       max-lifetime: 1800000
       maximum-pool-size: 10
       minimum-idle: 5
@@ -36,7 +36,7 @@ spring:
   
   # 多环境配置
   profiles:
-    active: local
+    active: dev
         
   # Jackson配置
   jackson:
