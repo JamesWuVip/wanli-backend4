@@ -1,0 +1,42 @@
+# Staging环境配置
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/wanli_backend_staging}
+    username: ${SPRING_DATASOURCE_USERNAME:staging_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:staging_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      maximum-pool-size: 10
+      minimum-idle: 5
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        jdbc:
+          time_zone: Asia/Shanghai
+
+# JWT配置
+jwt:
+  secret: ${JWT_SECRET:stagingSecretKeyForWanliEducationBackendSystem2024}
+  access-token-expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:3600000}
+  refresh-token-expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:7200000}
+
+# 日志配置
+logging:
+  level:
+    com.wanli: info
+    org.springframework.web: warn
+    org.springframework.security: warn
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/wanli-backend-staging.log
