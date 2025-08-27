@@ -1,64 +1,113 @@
 package com.wanli.common;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.time.LocalDateTime;
 
 /**
  * 统一API响应格式
+ * 
+ * @param <T> 响应数据类型
+ * @author wanli
+ * @version 1.0.0
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     
-    /**
-     * 响应状态码
-     */
-    private Integer code;
-    
-    /**
-     * 响应消息
-     */
+    private boolean success;
+    private String code;
     private String message;
-    
-    /**
-     * 响应数据
-     */
     private T data;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime timestamp;
+    
+    public ApiResponse() {
+        this.timestamp = LocalDateTime.now();
+    }
+    
+    public ApiResponse(boolean success, String code, String message, T data) {
+        this();
+        this.success = success;
+        this.code = code;
+        this.message = message;
+        this.data = data;
+    }
     
     /**
      * 成功响应
      */
     public static <T> ApiResponse<T> success(T data) {
-        return new ApiResponse<>(200, "操作成功", data);
+        return new ApiResponse<>(true, "SUCCESS", "操作成功", data);
     }
     
     /**
      * 成功响应（无数据）
      */
     public static <T> ApiResponse<T> success() {
-        return new ApiResponse<>(200, "操作成功", null);
+        return success(null);
     }
     
     /**
      * 成功响应（自定义消息）
      */
     public static <T> ApiResponse<T> success(String message, T data) {
-        return new ApiResponse<>(200, message, data);
+        return new ApiResponse<>(true, "SUCCESS", message, data);
     }
     
     /**
-     * 失败响应
+     * 错误响应
      */
-    public static <T> ApiResponse<T> error(Integer code, String message) {
-        return new ApiResponse<>(code, message, null);
+    public static <T> ApiResponse<T> error(String code, String message) {
+        return new ApiResponse<>(false, code, message, null);
     }
     
     /**
-     * 失败响应（默认500错误码）
+     * 错误响应（使用ErrorCode）
      */
-    public static <T> ApiResponse<T> error(String message) {
-        return new ApiResponse<>(500, message, null);
+    public static <T> ApiResponse<T> error(ErrorCode errorCode) {
+        return error(errorCode.getCode(), errorCode.getMessage());
+    }
+    
+    // Getters and Setters
+    public boolean isSuccess() {
+        return success;
+    }
+    
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+    
+    public String getCode() {
+        return code;
+    }
+    
+    public void setCode(String code) {
+        this.code = code;
+    }
+    
+    public String getMessage() {
+        return message;
+    }
+    
+    public void setMessage(String message) {
+        this.message = message;
+    }
+    
+    public T getData() {
+        return data;
+    }
+    
+    public void setData(T data) {
+        this.data = data;
+    }
+    
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+    
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
     }
 }
