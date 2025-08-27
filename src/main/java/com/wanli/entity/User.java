@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 /**
  * 用户实体类
@@ -51,6 +52,12 @@ public class User extends BaseEntity {
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
     
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+    
+    @Column(name = "franchise_id")
+    private UUID franchiseId;
+    
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;
@@ -69,6 +76,9 @@ public class User extends BaseEntity {
     
     @Column(name = "locked_until")
     private OffsetDateTime lockedUntil;
+    
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
     
     /**
      * 检查用户是否被锁定
@@ -133,11 +143,14 @@ public class User extends BaseEntity {
         private String passwordHash;
         private String email;
         private String fullName;
+        private String phoneNumber;
+        private UUID franchiseId;
         private UserRole role;
         private UserStatus status = UserStatus.ACTIVE;
         private OffsetDateTime lastLoginAt;
         private Integer loginAttempts = 0;
         private OffsetDateTime lockedUntil;
+        private OffsetDateTime deletedAt;
         
         public UserBuilder username(String username) {
             this.username = username;
@@ -156,6 +169,16 @@ public class User extends BaseEntity {
         
         public UserBuilder fullName(String fullName) {
             this.fullName = fullName;
+            return this;
+        }
+        
+        public UserBuilder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+        
+        public UserBuilder franchiseId(UUID franchiseId) {
+            this.franchiseId = franchiseId;
             return this;
         }
         
@@ -184,17 +207,25 @@ public class User extends BaseEntity {
             return this;
         }
         
+        public UserBuilder deletedAt(OffsetDateTime deletedAt) {
+            this.deletedAt = deletedAt;
+            return this;
+        }
+        
         public User build() {
             User user = new User();
             user.username = this.username;
             user.passwordHash = this.passwordHash;
             user.email = this.email;
             user.fullName = this.fullName;
+            user.phoneNumber = this.phoneNumber;
+            user.franchiseId = this.franchiseId;
             user.role = this.role;
             user.status = this.status;
             user.lastLoginAt = this.lastLoginAt;
             user.loginAttempts = this.loginAttempts;
             user.lockedUntil = this.lockedUntil;
+            user.deletedAt = this.deletedAt;
             return user;
         }
     }
@@ -224,6 +255,14 @@ public class User extends BaseEntity {
         return fullName;
     }
     
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    
+    public UUID getFranchiseId() {
+        return franchiseId;
+    }
+    
     public OffsetDateTime getLastLoginAt() {
         return lastLoginAt;
     }
@@ -234,6 +273,10 @@ public class User extends BaseEntity {
     
     public OffsetDateTime getLockedUntil() {
         return lockedUntil;
+    }
+    
+    public OffsetDateTime getDeletedAt() {
+        return deletedAt;
     }
     
     // 手动添加setter方法以解决Lombok注解处理器问题
@@ -247,6 +290,14 @@ public class User extends BaseEntity {
     
     public void setLoginAttempts(Integer loginAttempts) {
         this.loginAttempts = loginAttempts;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+    
+    public void setFranchiseId(UUID franchiseId) {
+        this.franchiseId = franchiseId;
     }
     
     public void setStatus(UserStatus status) {
@@ -271,5 +322,9 @@ public class User extends BaseEntity {
     
     public void setUsername(String username) {
         this.username = username;
+    }
+    
+    public void setDeletedAt(OffsetDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }

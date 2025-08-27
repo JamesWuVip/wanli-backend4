@@ -36,6 +36,9 @@ public class UserRegistrationDto {
     @Size(max = 100, message = "姓名长度不能超过100个字符")
     private String fullName;
     
+    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
+    private String phoneNumber;
+    
     private UserRole role = UserRole.STUDENT; // 默认为学生角色
     
     // 手动添加getter方法以解决Lombok注解处理器问题
@@ -63,6 +66,10 @@ public class UserRegistrationDto {
         return role;
     }
     
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+    
     // 手动添加setter方法
     public void setUsername(String username) {
         this.username = username;
@@ -86,5 +93,9 @@ public class UserRegistrationDto {
     
     public void setRole(UserRole role) {
         this.role = role;
+    }
+    
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

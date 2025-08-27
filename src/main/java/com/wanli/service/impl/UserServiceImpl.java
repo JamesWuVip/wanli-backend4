@@ -64,6 +64,7 @@ public class UserServiceImpl implements UserService {
                     .passwordHash(passwordEncoder.encode(registrationDto.getPassword()))
                     .email(registrationDto.getEmail())
                     .fullName(registrationDto.getFullName())
+                    .phoneNumber(registrationDto.getPhoneNumber())
                     .role(registrationDto.getRole())
                     .status(UserStatus.ACTIVE)
                     .loginAttempts(0)

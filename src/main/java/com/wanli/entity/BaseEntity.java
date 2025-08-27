@@ -1,9 +1,7 @@
 package com.wanli.entity;
 
 import lombok.Data;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+// 移除JPA审计相关导入
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
@@ -18,7 +16,6 @@ import java.util.UUID;
  */
 @Data
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
     
     @Id
@@ -26,11 +23,9 @@ public abstract class BaseEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
     
-    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
     
-    @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
     
@@ -87,16 +82,13 @@ public abstract class BaseEntity {
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }
-        if (this.createdAt == null) {
-            this.createdAt = OffsetDateTime.now();
-        }
-        if (this.updatedAt == null) {
-            this.updatedAt = OffsetDateTime.now();
-        }
+        OffsetDateTime now = OffsetDateTime.now();
+        this.createdAt = now;
+        this.updatedAt = now;
     }
     
     @PreUpdate
-    protected void onUpdate() {
+    public void onUpdate() {
         this.updatedAt = OffsetDateTime.now();
     }
 }
