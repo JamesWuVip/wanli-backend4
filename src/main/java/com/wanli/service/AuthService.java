@@ -17,7 +17,7 @@ public interface AuthService {
      * 用户注册
      * 
      * @param registrationDto 注册信息
-     * @return 用户响应信息
+     * @return 用户响应DTO
      */
     UserResponseDto register(UserRegistrationDto registrationDto);
     
@@ -25,7 +25,7 @@ public interface AuthService {
      * 用户登录
      * 
      * @param loginRequest 登录请求
-     * @return 登录响应信息
+     * @return 登录响应DTO
      */
     LoginResponseDto login(LoginRequestDto loginRequest);
     
@@ -33,7 +33,7 @@ public interface AuthService {
      * 获取当前用户信息
      * 
      * @param username 用户名
-     * @return 用户响应信息
+     * @return 用户响应DTO
      */
     UserResponseDto getCurrentUser(String username);
     
