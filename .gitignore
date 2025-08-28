@@ -119,6 +119,17 @@ failsafe-reports/
 *.p12
 *.jks
 
+# Sensitive configuration documents
+deployment-configuration-guide.md
+internal-deployment-guide.md
+staging-deployment-guide.md
+*-deployment-guide.md
+
+# Sensitive configuration files
+*-prod.yml
+*-staging.yml
+*-production.yml
+
 # Build artifacts
 build/
 dist/
