@@ -1,0 +1,120 @@
+{
+  "summary": {
+    "totalTests": 11,
+    "passedTests": 6,
+    "failedTests": 5,
+    "successRate": "54.55%",
+    "testDate": "2025-08-28T12:32:12.785Z"
+  },
+  "results": [
+    {
+      "test": "健康检查",
+      "success": true,
+      "message": "服务正常运行",
+      "timestamp": "2025-08-28T12:32:12.333Z",
+      "data": {
+        "success": true,
+        "code": "0000",
+        "message": "系统运行正常",
+        "data": {
+          "application": "wanli-backend",
+          "profile": "dev",
+          "version": "1.0.0",
+          "status": "UP",
+          "timestamp": "2025-08-28 20:32:12"
+        },
+        "timestamp": 1756384332325
+      }
+    },
+    {
+      "test": "用户注册",
+      "success": true,
+      "message": "注册成功",
+      "timestamp": "2025-08-28T12:32:12.486Z",
+      "data": {}
+    },
+    {
+      "test": "用户登录",
+      "success": true,
+      "message": "登录成功",
+      "timestamp": "2025-08-28T12:32:12.745Z",
+      "data": {
+        "token": "eyJhbGciOiJIUzI1NiJ9..."
+      }
+    },
+    {
+      "test": "获取用户信息",
+      "success": true,
+      "message": "获取成功",
+      "timestamp": "2025-08-28T12:32:12.757Z",
+      "data": {
+        "success": true,
+        "code": "0000",
+        "message": "获取用户信息成功",
+        "data": {
+          "userId": "f2e99b4c-759b-4d6f-b2d0-11cf30c3454c",
+          "username": "testuser_1756384332339",
+          "email": "test_1756384332339@example.com",
+          "fullName": "测试用户",
+          "role": "STUDENT",
+          "status": "ACTIVE",
+          "createdAt": "2025-08-28T12:32:12.473806Z",
+          "lastLoginAt": "2025-08-28T12:32:12.73411Z",
+          "active": true
+        },
+        "timestamp": 1756384332756
+      }
+    },
+    {
+      "test": "创建课程",
+      "success": true,
+      "message": "创建成功",
+      "timestamp": "2025-08-28T12:32:12.769Z",
+      "data": {}
+    },
+    {
+      "test": "查询课程列表",
+      "success": true,
+      "message": "查询成功，共0门课程",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": {
+        "count": 0
+      }
+    },
+    {
+      "test": "查询单个课程",
+      "success": false,
+      "message": "没有有效的认证令牌或课程ID",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": null
+    },
+    {
+      "test": "更新课程",
+      "success": false,
+      "message": "没有有效的认证令牌或课程ID",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": null
+    },
+    {
+      "test": "创建课时",
+      "success": false,
+      "message": "没有有效的认证令牌或课程ID",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": null
+    },
+    {
+      "test": "查询课时列表",
+      "success": false,
+      "message": "没有可用的测试课程ID",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": null
+    },
+    {
+      "test": "删除课程",
+      "success": false,
+      "message": "没有有效的认证令牌或课程ID",
+      "timestamp": "2025-08-28T12:32:12.785Z",
+      "data": null
+    }
+  ]
+}
