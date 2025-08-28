@@ -6,12 +6,12 @@
 
 ## 环境配置总览
 
-| 环境    | 部署平台   | 数据库类型      | 连接方式           | 配置文件                    |
-| :---- | :------ | :--------- | :------------- | :---------------------- |
-| 开发环境  | 本地      | PostgreSQL | 本地连接          | application-dev.yml     |
-| 测试环境  | Railway | PostgreSQL | DATABASE_URL环境变量 | application-test.yml    |
-| 预发布环境 | 本地      | PostgreSQL | 本地连接/环境变量     | application-staging.yml |
-| 生产环境  | Railway | PostgreSQL | DATABASE_URL环境变量 | application-prod.yml    |
+| 环境    | 部署平台    | 数据库类型      | 连接方式              | 配置文件                    |
+| :---- | :------ | :--------- | :---------------- | :---------------------- |
+| 开发环境  | 本地      | PostgreSQL | 本地连接              | application-dev.yml     |
+| 测试环境  | Railway | PostgreSQL | DATABASE\_URL环境变量 | application-test.yml    |
+| 预发布环境 | 本地      | PostgreSQL | 本地连接/环境变量         | application-staging.yml |
+| 生产环境  | Railway | PostgreSQL | DATABASE\_URL环境变量 | application-prod.yml    |
 
 ## 详细配置信息
 
@@ -354,10 +354,15 @@ psql -h localhost -U test_user -d wanli_backend_test
 Railway 会自动提供以下环境变量：
 
 * `DATABASE_URL`: 完整的 PostgreSQL 连接字符串
+
 * `PGHOST`: 数据库主机地址
+
 * `PGPORT`: 数据库端口
+
 * `PGDATABASE`: 数据库名称
+
 * `PGUSER`: 数据库用户名
+
 * `PGPASSWORD`: 数据库密码
 
 ### Railway CLI 常用命令
@@ -409,12 +414,18 @@ railway run -- java -jar app.jar --spring.profiles.active=prod
 ## 更新记录
 
 * 2025-01-27: 更新数据库配置信息
+
   * 纠正数据库类型：本地开发环境使用 PostgreSQL
+
   * 更新部署平台：测试和生产环境部署在 Railway 平台
+
   * 添加 Railway 部署相关配置和 CLI 命令
+
   * 更新环境变量配置方式
 
 * 2025-08-26: 创建初始版本，包含所有环境配置信息
+
   * 记录了开发、测试、预发布、生产四个环境的完整配置
+
   * 添加了常见问题解决方案和快速恢复命令
 
