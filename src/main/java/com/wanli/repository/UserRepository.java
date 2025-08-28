@@ -1,6 +1,7 @@
 package com.wanli.repository;
 
 import com.wanli.entity.User;
+import com.wanli.entity.UserRole;
 import com.wanli.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -93,4 +94,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying
     @Query("UPDATE User u SET u.lockedUntil = :lockUntil WHERE u.id = :userId")
     int lockUser(@Param("userId") UUID userId, @Param("lockUntil") OffsetDateTime lockUntil);
+    
+    /**
+     * 根据角色查找用户
+     */
+    List<User> findByRole(UserRole role);
 }

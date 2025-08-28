@@ -4,6 +4,7 @@ import com.wanli.dto.UserCreateDto;
 import com.wanli.dto.UserRegistrationDto;
 import com.wanli.dto.UserUpdateDto;
 import com.wanli.entity.User;
+import com.wanli.entity.UserRole;
 import com.wanli.entity.UserStatus;
 import com.wanli.exception.user.DuplicateEmailException;
 import com.wanli.exception.user.DuplicateUsernameException;
@@ -305,5 +306,17 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<User> getUsersByRole(String role) {
+        try {
+            UserRole userRole = UserRole.valueOf(role.toUpperCase());
+            return userRepository.findByRole(userRole);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid role provided: {}", role);
+            return List.of();
+        }
     }
 }

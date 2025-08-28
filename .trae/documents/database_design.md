@@ -1,14 +1,14 @@
-# SP1数据库实体设计文档
+# 数据库设计文档 - 完整版
 
 ## 1. 文档概述
 
 ### 1.1 文档目的
 
-本文档定义了万里书院Spring Boot后端项目SP1阶段的数据库实体设计规范，包括JPA实体类、数据库表结构、实体关系映射等。
+本文档定义了万里书院Spring Boot后端项目的完整数据库实体设计规范，包括用户管理、教育机构管理、课程管理、学员管理等核心业务实体的JPA实体类、数据库表结构、实体关系映射等。
 
 ### 1.2 适用范围
 
-* SP1阶段数据库实体开发
+* 数据库实体开发
 
 * JPA实体类设计
 
@@ -16,11 +16,13 @@
 
 * 实体关系映射配置
 
+* 教育业务数据管理
+
 ### 1.3 版本信息
 
-* 文档版本：V1.0
+* 文档版本：V2.0
 
-* 创建日期：2025-01-15
+* 创建日期：2025-01-17
 
 * Spring Boot版本：3.3.5
 
@@ -32,11 +34,11 @@
 
 ### 2.1 命名规范
 
-* 实体类名：使用PascalCase，如`User`、`Course`、`Lesson`
+* 实体类名：使用PascalCase，如`User`、`Course`、`Institution`
 
 * 属性名：使用camelCase，如`userId`、`courseName`、`createdAt`
 
-* 表名：使用snake\_case，如`users`、`courses`、`lessons`
+* 表名：使用snake\_case，如`users`、`courses`、`institutions`
 
 * 字段名：使用snake\_case，如`user_id`、`course_name`、`created_at`
 
@@ -50,9 +52,11 @@
 
 * `updatedAt`: 更新时间
 
-* `createdBy`: 创建者ID（可选）
+* `createdBy`: 创建者ID
 
 * `updatedBy`: 更新者ID（可选）
+
+* `deletedAt`: 软删除时间（可选）
 
 ### 2.3 数据类型规范
 
@@ -97,14 +101,134 @@ public abstract class BaseEntity {
     @Column(name = "updated_by")
     private String updatedBy;
     
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+    
     // Getters and Setters
     // ...
 }
 ```
 
-## 4. 用户实体设计
+## 4. 完整实体关系图
 
-### 4.1 User实体类
+```mermaid
+erDiagram
+    USER ||--o{ INSTITUTION : creates
+    USER ||--o{ COURSE : creates
+    USER ||--o{ LESSON : creates
+    USER ||--o{ STUDENT : creates
+    INSTITUTION ||--o{ COURSE : manages
+    INSTITUTION ||--o{ STUDENT : enrolls
+    COURSE ||--o{ LESSON : contains
+    COURSE ||--o{ COURSE_STUDENT : has
+    STUDENT ||--o{ COURSE_STUDENT : takes
+    
+    USER {
+        string id PK
+        string username UK
+        string password_hash
+        string email UK
+        string full_name
+        enum role
+        enum status
+        datetime last_login_at
+        int login_attempts
+        datetime locked_until
+        datetime created_at
+        datetime updated_at
+        string created_by FK
+        string updated_by FK
+        datetime deleted_at
+    }
+    
+    INSTITUTION {
+        string id PK
+        string name
+        text description
+        string contact_email
+        string contact_phone
+        text address
+        enum status
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    
+    COURSE {
+        string id PK
+        string course_name
+        text course_description
+        string institution_id FK
+        enum grade_level
+        enum subject
+        enum status
+        string course_code UK
+        int total_lessons
+        int estimated_duration
+        decimal price
+        int duration_hours
+        datetime start_date
+        datetime end_date
+        int max_students
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    
+    LESSON {
+        string id PK
+        string course_id FK
+        string lesson_name
+        text lesson_description
+        int lesson_order
+        int duration
+        enum status
+        string lesson_code UK
+        text objectives
+        text prerequisites
+        text materials
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    
+    STUDENT {
+        string id PK
+        string name
+        string email
+        string phone
+        date birth_date
+        enum gender
+        text address
+        string institution_id FK
+        enum status
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+    
+    COURSE_STUDENT {
+        string id PK
+        string course_id FK
+        string student_id FK
+        datetime enrollment_date
+        enum status
+        decimal paid_amount
+        datetime payment_date
+        text notes
+        string created_by FK
+        datetime created_at
+        datetime updated_at
+    }
+```
+
+## 5. 用户实体设计
+
+### 5.1 User实体类
 
 ```java
 @Entity
@@ -146,6 +270,11 @@ public class User extends BaseEntity {
     @Column(name = "locked_until")
     private LocalDateTime lockedUntil;
     
+    // 一对多关系：用户创建的教育机构
+    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Institution> createdInstitutions = new ArrayList<>();
+    
     // 一对多关系：用户创建的课程
     @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
@@ -155,10 +284,15 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Lesson> createdLessons = new ArrayList<>();
+    
+    // 一对多关系：用户创建的学员
+    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Student> createdStudents = new ArrayList<>();
 }
 ```
 
-### 4.2 UserRole枚举
+### 5.2 UserRole枚举
 
 ```java
 public enum UserRole {
@@ -181,7 +315,7 @@ public enum UserRole {
 }
 ```
 
-### 4.3 UserStatus枚举
+### 5.3 UserStatus枚举
 
 ```java
 public enum UserStatus {
@@ -200,9 +334,78 @@ public enum UserStatus {
 }
 ```
 
-## 5. 课程实体设计
+## 6. 教育机构实体设计
 
-### 5.1 Course实体类
+### 6.1 Institution实体类
+
+```java
+@Entity
+@Table(name = "institutions")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Institution extends BaseEntity {
+    
+    @Column(name = "name", nullable = false, length = 100)
+    private String name;
+    
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+    
+    @Column(name = "contact_email", length = 100)
+    private String contactEmail;
+    
+    @Column(name = "contact_phone", length = 20)
+    private String contactPhone;
+    
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private InstitutionStatus status = InstitutionStatus.ACTIVE;
+    
+    // 多对一关系：机构创建者
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "id", insertable = false, updatable = false)
+    @JsonIgnore
+    private User createdByUser;
+    
+    // 一对多关系：机构管理的课程
+    @OneToMany(mappedBy = "institution", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Course> courses = new ArrayList<>();
+    
+    // 一对多关系：机构的学员
+    @OneToMany(mappedBy = "institution", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Student> students = new ArrayList<>();
+}
+```
+
+### 6.2 InstitutionStatus枚举
+
+```java
+public enum InstitutionStatus {
+    ACTIVE("活跃"),
+    INACTIVE("非活跃"),
+    SUSPENDED("暂停");
+    
+    private final String displayName;
+    
+    InstitutionStatus(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getDisplayName() { return displayName; }
+}
+```
+
+## 7. 课程实体设计
+
+### 7.1 Course实体类
 
 ```java
 @Entity
@@ -219,18 +422,21 @@ public class Course extends BaseEntity {
     @Column(name = "course_description", columnDefinition = "TEXT")
     private String courseDescription;
     
+    @Column(name = "institution_id", nullable = false)
+    private String institutionId;
+    
     @Enumerated(EnumType.STRING)
-    @Column(name = "grade_level", nullable = false, length = 20)
+    @Column(name = "grade_level", length = 20)
     private GradeLevel gradeLevel;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "subject", nullable = false, length = 20)
+    @Column(name = "subject", length = 20)
     private Subject subject;
     
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private CourseStatus status = CourseStatus.ACTIVE;
+    private CourseStatus status = CourseStatus.DRAFT;
     
     @Column(name = "course_code", unique = true, length = 50)
     private String courseCode;
@@ -241,6 +447,30 @@ public class Course extends BaseEntity {
     
     @Column(name = "estimated_duration")
     private Integer estimatedDuration; // 预计总时长（分钟）
+    
+    @Column(name = "price", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal price = BigDecimal.ZERO;
+    
+    @Column(name = "duration_hours")
+    @Builder.Default
+    private Integer durationHours = 0;
+    
+    @Column(name = "start_date")
+    private LocalDateTime startDate;
+    
+    @Column(name = "end_date")
+    private LocalDateTime endDate;
+    
+    @Column(name = "max_students")
+    @Builder.Default
+    private Integer maxStudents = 50;
+    
+    // 多对一关系：所属教育机构
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Institution institution;
     
     // 多对一关系：课程创建者
     @ManyToOne(fetch = FetchType.LAZY)
@@ -253,6 +483,11 @@ public class Course extends BaseEntity {
     @OrderBy("lessonOrder ASC")
     @JsonIgnore
     private List<Lesson> lessons = new ArrayList<>();
+    
+    // 一对多关系：课程学员关联
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CourseStudent> courseStudents = new ArrayList<>();
     
     // 业务方法
     public void addLesson(Lesson lesson) {
@@ -269,7 +504,7 @@ public class Course extends BaseEntity {
 }
 ```
 
-### 5.2 GradeLevel枚举
+### 7.2 GradeLevel枚举
 
 ```java
 public enum GradeLevel {
@@ -300,7 +535,7 @@ public enum GradeLevel {
 }
 ```
 
-### 5.3 Subject枚举
+### 7.3 Subject枚举
 
 ```java
 public enum Subject {
@@ -325,11 +560,15 @@ public enum Subject {
 }
 ```
 
-### 5.4 CourseStatus枚举
+### 7.4 CourseStatus枚举
 
 ```java
 public enum CourseStatus {
     DRAFT("草稿"),
+    PUBLISHED("已发布"),
+    ONGOING("进行中"),
+    COMPLETED("已完成"),
+    CANCELLED("已取消"),
     ACTIVE("激活"),
     INACTIVE("未激活"),
     ARCHIVED("已归档"),
@@ -345,9 +584,9 @@ public enum CourseStatus {
 }
 ```
 
-## 6. 课时实体设计
+## 8. 课时实体设计
 
-### 6.1 Lesson实体类
+### 8.1 Lesson实体类
 
 ```java
 @Entity
@@ -373,7 +612,7 @@ public class Lesson extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private LessonStatus status = LessonStatus.ACTIVE;
+    private LessonStatus status = LessonStatus.DRAFT;
     
     @Column(name = "lesson_code", unique = true, length = 50)
     private String lessonCode;
@@ -410,12 +649,13 @@ public class Lesson extends BaseEntity {
 }
 ```
 
-### 6.2 LessonStatus枚举
+### 8.2 LessonStatus枚举
 
 ```java
 public enum LessonStatus {
     DRAFT("草稿"),
     PUBLISHED("已发布"),
+    ACTIVE("激活"),
     ARCHIVED("已归档");
     
     private final String displayName;
@@ -428,26 +668,200 @@ public enum LessonStatus {
 }
 ```
 
-## 7. 数据库表结构
+## 9. 学员实体设计
 
-### 7.1 用户表（users）
+### 9.1 Student实体类
+
+```java
+@Entity
+@Table(name = "students")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Student extends BaseEntity {
+    
+    @Column(name = "name", nullable = false, length = 50)
+    private String name;
+    
+    @Column(name = "email", length = 100)
+    private String email;
+    
+    @Column(name = "phone", length = 20)
+    private String phone;
+    
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "gender", length = 10)
+    private Gender gender;
+    
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+    
+    @Column(name = "institution_id", nullable = false)
+    private String institutionId;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private StudentStatus status = StudentStatus.ACTIVE;
+    
+    // 多对一关系：所属教育机构
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Institution institution;
+    
+    // 多对一关系：学员创建者
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "id", insertable = false, updatable = false)
+    @JsonIgnore
+    private User createdByUser;
+    
+    // 一对多关系：学员课程关联
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<CourseStudent> courseStudents = new ArrayList<>();
+}
+```
+
+### 9.2 Gender枚举
+
+```java
+public enum Gender {
+    MALE("男"),
+    FEMALE("女"),
+    OTHER("其他");
+    
+    private final String displayName;
+    
+    Gender(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getDisplayName() { return displayName; }
+}
+```
+
+### 9.3 StudentStatus枚举
+
+```java
+public enum StudentStatus {
+    ACTIVE("在读"),
+    INACTIVE("非活跃"),
+    GRADUATED("已毕业"),
+    DROPPED("已退学");
+    
+    private final String displayName;
+    
+    StudentStatus(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getDisplayName() { return displayName; }
+}
+```
+
+## 10. 课程学员关联实体设计
+
+### 10.1 CourseStudent实体类
+
+```java
+@Entity
+@Table(name = "course_students")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class CourseStudent extends BaseEntity {
+    
+    @Column(name = "course_id", nullable = false)
+    private String courseId;
+    
+    @Column(name = "student_id", nullable = false)
+    private String studentId;
+    
+    @Column(name = "enrollment_date", nullable = false)
+    @Builder.Default
+    private LocalDateTime enrollmentDate = LocalDateTime.now();
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private EnrollmentStatus status = EnrollmentStatus.ENROLLED;
+    
+    @Column(name = "paid_amount", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal paidAmount = BigDecimal.ZERO;
+    
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate;
+    
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+    
+    // 多对一关系：关联课程
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Course course;
+    
+    // 多对一关系：关联学员
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "student_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private Student student;
+    
+    // 多对一关系：创建者
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", referencedColumnName = "id", insertable = false, updatable = false)
+    @JsonIgnore
+    private User createdByUser;
+}
+```
+
+### 10.2 EnrollmentStatus枚举
+
+```java
+public enum EnrollmentStatus {
+    ENROLLED("已报名"),
+    COMPLETED("已完成"),
+    DROPPED("已退课"),
+    SUSPENDED("暂停");
+    
+    private final String displayName;
+    
+    EnrollmentStatus(String displayName) {
+        this.displayName = displayName;
+    }
+    
+    public String getDisplayName() { return displayName; }
+}
+```
+
+## 11. 数据库表结构
+
+### 11.1 用户表（users）
 
 ```sql
 CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
     role VARCHAR(20) NOT NULL CHECK (role IN ('HQ_TEACHER', 'BRANCH_TEACHER', 'STUDENT', 'ADMIN')),
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'LOCKED', 'DELETED')),
-    last_login_at TIMESTAMP,
+    last_login_at TIMESTAMP WITH TIME ZONE,
     login_attempts INTEGER NOT NULL DEFAULT 0,
-    locked_until TIMESTAMP,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(36),
-    updated_by VARCHAR(36)
+    locked_until TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- 索引
@@ -455,60 +869,107 @@ CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_status ON users(status);
-CREATE INDEX idx_users_created_at ON users(created_at);
+CREATE INDEX idx_users_created_at ON users(created_at DESC);
+CREATE INDEX idx_users_deleted_at ON users(deleted_at);
 ```
 
-### 7.2 课程表（courses）
+### 11.2 教育机构表（institutions）
+
+```sql
+CREATE TABLE institutions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    contact_email VARCHAR(100),
+    contact_phone VARCHAR(20),
+    address TEXT,
+    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')),
+    created_by UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    CONSTRAINT fk_institutions_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- 索引
+CREATE INDEX idx_institutions_name ON institutions(name);
+CREATE INDEX idx_institutions_status ON institutions(status);
+CREATE INDEX idx_institutions_created_by ON institutions(created_by);
+CREATE INDEX idx_institutions_created_at ON institutions(created_at DESC);
+CREATE INDEX idx_institutions_deleted_at ON institutions(deleted_at);
+```
+
+### 11.3 课程表（courses）
 
 ```sql
 CREATE TABLE courses (
-    id VARCHAR(36) PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_name VARCHAR(200) NOT NULL,
     course_description TEXT,
-    grade_level VARCHAR(20) NOT NULL CHECK (grade_level IN ('GRADE_1', 'GRADE_2', 'GRADE_3', 'GRADE_4', 'GRADE_5', 'GRADE_6', 'GRADE_7', 'GRADE_8', 'GRADE_9', 'GRADE_10', 'GRADE_11', 'GRADE_12')),
-    subject VARCHAR(20) NOT NULL CHECK (subject IN ('MATH', 'CHINESE', 'ENGLISH', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'HISTORY', 'GEOGRAPHY', 'POLITICS', 'COMPUTER')),
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED', 'DELETED')),
+    institution_id UUID NOT NULL,
+    grade_level VARCHAR(20) CHECK (grade_level IN ('GRADE_1', 'GRADE_2', 'GRADE_3', 'GRADE_4', 'GRADE_5', 'GRADE_6', 'GRADE_7', 'GRADE_8', 'GRADE_9', 'GRADE_10', 'GRADE_11', 'GRADE_12')),
+    subject VARCHAR(20) CHECK (subject IN ('MATH', 'CHINESE', 'ENGLISH', 'PHYSICS', 'CHEMISTRY', 'BIOLOGY', 'HISTORY', 'GEOGRAPHY', 'POLITICS', 'COMPUTER')),
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PUBLISHED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'ACTIVE', 'INACTIVE', 'ARCHIVED', 'DELETED')),
     course_code VARCHAR(50) UNIQUE,
     total_lessons INTEGER DEFAULT 0,
     estimated_duration INTEGER,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(36),
-    updated_by VARCHAR(36),
-    FOREIGN KEY (created_by) REFERENCES users(id)
+    price DECIMAL(10,2) DEFAULT 0.00,
+    duration_hours INTEGER DEFAULT 0,
+    start_date TIMESTAMP WITH TIME ZONE,
+    end_date TIMESTAMP WITH TIME ZONE,
+    max_students INTEGER DEFAULT 50,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID NOT NULL,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    CONSTRAINT fk_courses_institution_id FOREIGN KEY (institution_id) REFERENCES institutions(id),
+    CONSTRAINT fk_courses_created_by FOREIGN KEY (created_by) REFERENCES users(id),
+    CONSTRAINT chk_courses_dates CHECK (end_date IS NULL OR start_date IS NULL OR end_date >= start_date),
+    CONSTRAINT chk_courses_price CHECK (price >= 0),
+    CONSTRAINT chk_courses_duration CHECK (duration_hours >= 0),
+    CONSTRAINT chk_courses_max_students CHECK (max_students > 0)
 );
 
 -- 索引
 CREATE INDEX idx_courses_course_name ON courses(course_name);
+CREATE INDEX idx_courses_institution_id ON courses(institution_id);
 CREATE INDEX idx_courses_grade_level ON courses(grade_level);
 CREATE INDEX idx_courses_subject ON courses(subject);
 CREATE INDEX idx_courses_status ON courses(status);
 CREATE INDEX idx_courses_course_code ON courses(course_code);
+CREATE INDEX idx_courses_start_date ON courses(start_date);
 CREATE INDEX idx_courses_created_by ON courses(created_by);
-CREATE INDEX idx_courses_created_at ON courses(created_at);
+CREATE INDEX idx_courses_created_at ON courses(created_at DESC);
+CREATE INDEX idx_courses_deleted_at ON courses(deleted_at);
 ```
 
-### 7.3 课时表（lessons）
+### 11.4 课时表（lessons）
 
 ```sql
 CREATE TABLE lessons (
-    id VARCHAR(36) PRIMARY KEY,
-    course_id VARCHAR(36) NOT NULL,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id UUID NOT NULL,
     lesson_name VARCHAR(200) NOT NULL,
     lesson_description TEXT,
     lesson_order INTEGER NOT NULL,
     duration INTEGER,
-    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('DRAFT', 'ACTIVE', 'INACTIVE', 'ARCHIVED', 'DELETED')),
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'PUBLISHED', 'ACTIVE', 'ARCHIVED')),
     lesson_code VARCHAR(50) UNIQUE,
     objectives TEXT,
     prerequisites TEXT,
     materials TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by VARCHAR(36),
-    updated_by VARCHAR(36),
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_by UUID NOT NULL,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    CONSTRAINT fk_lessons_course_id FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_lessons_created_by FOREIGN KEY (created_by) REFERENCES users(id),
     UNIQUE(course_id, lesson_order)
 );
 
@@ -519,12 +980,79 @@ CREATE INDEX idx_lessons_lesson_order ON lessons(lesson_order);
 CREATE INDEX idx_lessons_status ON lessons(status);
 CREATE INDEX idx_lessons_lesson_code ON lessons(lesson_code);
 CREATE INDEX idx_lessons_created_by ON lessons(created_by);
-CREATE INDEX idx_lessons_created_at ON lessons(created_at);
+CREATE INDEX idx_lessons_created_at ON lessons(created_at DESC);
+CREATE INDEX idx_lessons_deleted_at ON lessons(deleted_at);
 ```
 
-## 8. Repository接口设计
+### 11.5 学员表（students）
 
-### 8.1 UserRepository
+```sql
+CREATE TABLE students (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    birth_date DATE,
+    gender VARCHAR(10) CHECK (gender IN ('MALE', 'FEMALE', 'OTHER')),
+    address TEXT,
+    institution_id UUID NOT NULL,
+    status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'GRADUATED', 'DROPPED')),
+    created_by UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    CONSTRAINT fk_students_institution_id FOREIGN KEY (institution_id) REFERENCES institutions(id),
+    CONSTRAINT fk_students_created_by FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- 索引
+CREATE INDEX idx_students_name ON students(name);
+CREATE INDEX idx_students_email ON students(email);
+CREATE INDEX idx_students_institution_id ON students(institution_id);
+CREATE INDEX idx_students_status ON students(status);
+CREATE INDEX idx_students_created_by ON students(created_by);
+CREATE INDEX idx_students_created_at ON students(created_at DESC);
+CREATE INDEX idx_students_deleted_at ON students(deleted_at);
+```
+
+### 11.6 课程学员关联表（course\_students）
+
+```sql
+CREATE TABLE course_students (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    course_id UUID NOT NULL,
+    student_id UUID NOT NULL,
+    enrollment_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    status VARCHAR(20) NOT NULL DEFAULT 'ENROLLED' CHECK (status IN ('ENROLLED', 'COMPLETED', 'DROPPED', 'SUSPENDED')),
+    paid_amount DECIMAL(10,2) DEFAULT 0.00,
+    payment_date TIMESTAMP WITH TIME ZONE,
+    notes TEXT,
+    created_by UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_by UUID,
+    
+    CONSTRAINT fk_course_students_course_id FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
+    CONSTRAINT fk_course_students_student_id FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+    CONSTRAINT fk_course_students_created_by FOREIGN KEY (created_by) REFERENCES users(id),
+    CONSTRAINT chk_course_students_paid_amount CHECK (paid_amount >= 0),
+    UNIQUE(course_id, student_id)
+);
+
+-- 索引
+CREATE INDEX idx_course_students_course_id ON course_students(course_id);
+CREATE INDEX idx_course_students_student_id ON course_students(student_id);
+CREATE INDEX idx_course_students_status ON course_students(status);
+CREATE INDEX idx_course_students_enrollment_date ON course_students(enrollment_date DESC);
+CREATE INDEX idx_course_students_created_by ON course_students(created_by);
+CREATE INDEX idx_course_students_created_at ON course_students(created_at DESC);
+```
+
+## 12. Repository接口设计
+
+### 12.1 UserRepository
 
 ```java
 @Repository
@@ -559,17 +1087,43 @@ public interface UserRepository extends JpaRepository<User, String>, JpaSpecific
 }
 ```
 
-### 8.2 CourseRepository
+### 12.2 InstitutionRepository
+
+```java
+@Repository
+public interface InstitutionRepository extends JpaRepository<Institution, String>, JpaSpecificationExecutor<Institution> {
+    
+    List<Institution> findByStatus(InstitutionStatus status);
+    
+    @Query("SELECT i FROM Institution i WHERE i.name LIKE %:keyword% OR i.description LIKE %:keyword%")
+    Page<Institution> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    
+    @Query("SELECT i FROM Institution i WHERE i.createdBy = :createdBy")
+    List<Institution> findByCreatedBy(@Param("createdBy") String createdBy);
+    
+    @Query("SELECT COUNT(i) FROM Institution i WHERE i.status = :status")
+    Long countByStatus(@Param("status") InstitutionStatus status);
+    
+    @Query("SELECT i FROM Institution i WHERE i.deletedAt IS NULL")
+    List<Institution> findAllActive();
+}
+```
+
+### 12.3 CourseRepository
 
 ```java
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String>, JpaSpecificationExecutor<Course> {
+    
+    List<Course> findByInstitutionId(String institutionId);
     
     List<Course> findByGradeLevel(GradeLevel gradeLevel);
     
     List<Course> findBySubject(Subject subject);
     
     List<Course> findByStatus(CourseStatus status);
+    
+    Page<Course> findByInstitutionIdAndStatus(String institutionId, CourseStatus status, Pageable pageable);
     
     Page<Course> findByGradeLevelAndSubject(GradeLevel gradeLevel, 
                                            Subject subject, 
@@ -590,7 +1144,7 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
 }
 ```
 
-### 8.3 LessonRepository
+### 12.4 LessonRepository
 
 ```java
 @Repository
@@ -620,9 +1174,73 @@ public interface LessonRepository extends JpaRepository<Lesson, String>, JpaSpec
 }
 ```
 
-## 9. 数据验证规范
+### 12.5 StudentRepository
 
-### 9.1 Bean Validation注解
+```java
+@Repository
+public interface StudentRepository extends JpaRepository<Student, String>, JpaSpecificationExecutor<Student> {
+    
+    List<Student> findByInstitutionId(String institutionId);
+    
+    List<Student> findByStatus(StudentStatus status);
+    
+    Page<Student> findByInstitutionIdAndStatus(String institutionId, StudentStatus status, Pageable pageable);
+    
+    @Query("SELECT s FROM Student s WHERE s.name LIKE %:keyword% OR s.email LIKE %:keyword%")
+    Page<Student> findByKeyword(@Param("keyword") String keyword, Pageable pageable);
+    
+    @Query("SELECT s FROM Student s WHERE s.createdBy = :createdBy")
+    List<Student> findByCreatedBy(@Param("createdBy") String createdBy);
+    
+    boolean existsByEmail(String email);
+    
+    Optional<Student> findByEmail(String email);
+    
+    @Query("SELECT COUNT(s) FROM Student s WHERE s.status = :status")
+    Long countByStatus(@Param("status") StudentStatus status);
+    
+    @Query("SELECT s FROM Student s WHERE s.deletedAt IS NULL")
+    List<Student> findAllActive();
+}
+```
+
+### 12.6 CourseStudentRepository
+
+```java
+@Repository
+public interface CourseStudentRepository extends JpaRepository<CourseStudent, String>, JpaSpecificationExecutor<CourseStudent> {
+    
+    List<CourseStudent> findByCourseId(String courseId);
+    
+    List<CourseStudent> findByStudentId(String studentId);
+    
+    List<CourseStudent> findByStatus(EnrollmentStatus status);
+    
+    Page<CourseStudent> findByCourseIdAndStatus(String courseId, EnrollmentStatus status, Pageable pageable);
+    
+    Page<CourseStudent> findByStudentIdAndStatus(String studentId, EnrollmentStatus status, Pageable pageable);
+    
+    Optional<CourseStudent> findByCourseIdAndStudentId(String courseId, String studentId);
+    
+    boolean existsByCourseIdAndStudentId(String courseId, String studentId);
+    
+    @Query("SELECT COUNT(cs) FROM CourseStudent cs WHERE cs.courseId = :courseId AND cs.status = :status")
+    Long countByCourseIdAndStatus(@Param("courseId") String courseId, 
+                                 @Param("status") EnrollmentStatus status);
+    
+    @Query("SELECT COUNT(cs) FROM CourseStudent cs WHERE cs.studentId = :studentId AND cs.status = :status")
+    Long countByStudentIdAndStatus(@Param("studentId") String studentId, 
+                                  @Param("status") EnrollmentStatus status);
+    
+    @Query("SELECT cs FROM CourseStudent cs WHERE cs.enrollmentDate BETWEEN :startDate AND :endDate")
+    List<CourseStudent> findByEnrollmentDateBetween(@Param("startDate") LocalDateTime startDate,
+                                                   @Param("endDate") LocalDateTime endDate);
+}
+```
+
+## 13. 数据验证规范
+
+### 13.1 Bean Validation注解
 
 ```java
 // 用户实体验证示例
@@ -648,9 +1266,43 @@ public class User extends BaseEntity {
     
     // ...
 }
+
+// 教育机构实体验证示例
+@Entity
+public class Institution extends BaseEntity {
+    
+    @NotBlank(message = "机构名称不能为空")
+    @Size(min = 2, max = 100, message = "机构名称长度必须在2-100个字符之间")
+    private String name;
+    
+    @Email(message = "联系邮箱格式不正确")
+    private String contactEmail;
+    
+    @Pattern(regexp = "^[0-9-+()\\s]*$", message = "联系电话格式不正确")
+    private String contactPhone;
+    
+    // ...
+}
+
+// 学员实体验证示例
+@Entity
+public class Student extends BaseEntity {
+    
+    @NotBlank(message = "学员姓名不能为空")
+    @Size(min = 2, max = 50, message = "学员姓名长度必须在2-50个字符之间")
+    private String name;
+    
+    @Email(message = "邮箱格式不正确")
+    private String email;
+    
+    @Past(message = "出生日期必须是过去的日期")
+    private LocalDate birthDate;
+    
+    // ...
+}
 ```
 
-### 9.2 自定义验证器
+### 13.2 自定义验证器
 
 ```java
 @Target({ElementType.FIELD})
@@ -670,15 +1322,15 @@ public class CourseCodeValidator implements ConstraintValidator<ValidCourseCode,
         if (courseCode == null || courseCode.trim().isEmpty()) {
             return true; // 让@NotBlank处理空值验证
         }
-        // 课程代码格式：GRADE_SUBJECT_YYYYMM，如：G1_MATH_202501
-        return courseCode.matches("^G[1-9]|1[0-2]_[A-Z]+_\\d{6}$");
+        // 课程代码格式：INST_GRADE_SUBJECT_YYYYMM，如：INST001_G1_MATH_202501
+        return courseCode.matches("^INST\\d{3}_G[1-9]|1[0-2]_[A-Z]+_\\d{6}$");
     }
 }
 ```
 
-## 10. JPA配置
+## 14. JPA配置
 
-### 10.1 审计配置
+### 14.1 审计配置
 
 ```java
 @Configuration
@@ -709,7 +1361,7 @@ public class SpringSecurityAuditorAware implements AuditorAware<String> {
 }
 ```
 
-### 10.2 数据库配置
+### 14.2 数据库配置
 
 ```yaml
 spring:
@@ -736,157 +1388,138 @@ spring:
       max-lifetime: 1200000
 ```
 
-## 11. 实体关系图
+## 15. 数据初始化
 
-```mermaid
-erDiagram
-    USER ||--o{ COURSE : creates
-    USER ||--o{ LESSON : creates
-    COURSE ||--o{ LESSON : contains
-    
-    USER {
-        string id PK
-        string username UK
-        string password_hash
-        string email UK
-        string full_name
-        enum role
-        enum status
-        datetime last_login_at
-        int login_attempts
-        datetime locked_until
-        datetime created_at
-        datetime updated_at
-        string created_by FK
-        string updated_by FK
-    }
-    
-    COURSE {
-        string id PK
-        string course_name
-        text course_description
-        enum grade_level
-        enum subject
-        enum status
-        string course_code UK
-        int total_lessons
-        int estimated_duration
-        datetime created_at
-        datetime updated_at
-        string created_by FK
-        string updated_by FK
-    }
-    
-    LESSON {
-        string id PK
-        string course_id FK
-        string lesson_name
-        text lesson_description
-        int lesson_order
-        int duration
-        enum status
-        string lesson_code UK
-        text objectives
-        text prerequisites
-        text materials
-        datetime created_at
-        datetime updated_at
-        string created_by FK
-        string updated_by FK
-    }
-```
-
-## 12. 数据初始化
-
-### 12.1 初始化脚本
+### 15.1 初始化脚本
 
 ```sql
 -- 插入默认管理员用户
 INSERT INTO users (id, username, password_hash, email, full_name, role, status, created_at, updated_at)
 VALUES (
-    'admin-uuid-string',
+    gen_random_uuid(),
     'admin',
     '$2a$10$encrypted_password_hash',
     'admin@wanli.edu',
     '系统管理员',
     'ADMIN',
     'ACTIVE',
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    NOW(),
+    NOW()
 );
 
 -- 插入测试教师用户
 INSERT INTO users (id, username, password_hash, email, full_name, role, status, created_at, updated_at)
 VALUES (
-    'teacher-uuid-string',
+    gen_random_uuid(),
     'teacher001',
     '$2a$10$encrypted_password_hash',
     'teacher001@wanli.edu',
     '张老师',
     'HQ_TEACHER',
     'ACTIVE',
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
+    NOW(),
+    NOW()
+);
+
+-- 插入测试教育机构
+INSERT INTO institutions (id, name, description, contact_email, contact_phone, address, status, created_by, created_at, updated_at)
+VALUES (
+    gen_random_uuid(),
+    '万里书院总部',
+    '万里书院教育集团总部机构',
+    'contact@wanli.edu',
+    '400-123-4567',
+    '北京市朝阳区教育大厦',
+    'ACTIVE',
+    (SELECT id FROM users WHERE username = 'admin'),
+    NOW(),
+    NOW()
+);
+
+-- 插入测试课程
+INSERT INTO courses (id, course_name, course_description, institution_id, grade_level, subject, status, course_code, price, duration_hours, max_students, created_by, created_at, updated_at)
+VALUES (
+    gen_random_uuid(),
+    '小学一年级数学基础课程',
+    '针对小学一年级学生的数学基础知识教学',
+    (SELECT id FROM institutions WHERE name = '万里书院总部'),
+    'GRADE_1',
+    'MATH',
+    'PUBLISHED',
+    'INST001_G1_MATH_202501',
+    299.00,
+    20,
+    30,
+    (SELECT id FROM users WHERE username = 'teacher001'),
+    NOW(),
+    NOW()
+);
+
+-- 插入测试学员
+INSERT INTO students (id, name, email, phone, birth_date, gender, address, institution_id, status, created_by, created_at, updated_at)
+VALUES (
+    gen_random_uuid(),
+    '小明',
+    'xiaoming@example.com',
+    '138-0000-0001',
+    '2017-05-15',
+    'MALE',
+    '北京市海淀区学院路',
+    (SELECT id FROM institutions WHERE name = '万里书院总部'),
+    'ACTIVE',
+    (SELECT id FROM users WHERE username = 'teacher001'),
+    NOW(),
+    NOW()
 );
 ```
 
-## 13. 性能优化建议
+## 16. 性能优化建议
 
-### 13.1 索引策略
+### 16.1 索引策略
 
 * 为经常查询的字段创建索引
+
 * 为外键字段创建索引
+
 * 为复合查询创建复合索引
+
 * 定期分析索引使用情况
 
-### 13.2 查询优化
+* 避免过多索引影响写入性能
+
+### 16.2 查询优化
 
 * 使用@Query注解优化复杂查询
+
 * 合理使用FetchType.LAZY避免N+1问题
+
 * 使用@EntityGraph优化关联查询
+
 * 使用分页查询避免大量数据加载
 
-### 13.3 缓存策略
+* 使用投影查询减少数据传输
+
+### 16.3 缓存策略
 
 * 对不经常变化的数据使用二级缓存
+
 * 使用Redis缓存热点数据
+
 * 合理设置缓存过期时间
 
-## 14. 验收标准
+* 使用缓存预热提高性能
 
-### 14.1 实体设计验收
+## 17. 验收标准
+
+### 17.1 实体设计验收
 
 * 所有实体类符合命名规范
+
 * 实体关系映射正确
+
 * 数据验证注解完整
+
 * 审计字段配置正确
 
-### 14.2 数据库验收
-
-* 表结构创建成功
-* 索引创建完整
-* 外键约束正确
-* 初始数据插入成功
-
-### 14.3 Repository验收
-
-* 基础CRUD操作正常
-* 自定义查询方法正确
-* 分页查询功能正常
-* 事务处理正确
-
-## 15. 附录
-
-### 15.1 相关文档
-
-* 《万里书院 - 数据库设计文档 (V0.2).md》
-* 《SP1后端API接口设计文档.md》
-* 《万里书院 - Sprint 1 任务说明书.md》
-
-### 15.2 开发工具
-
-* IDE: IntelliJ IDEA
-* 数据库工具: DBeaver
-* API测试: Postman
-* 版本控制: Git
+* 软
 

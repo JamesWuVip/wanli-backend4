@@ -1,23 +1,8 @@
-# 万里后端系统 API 接口文档
+# 已合并到API接口文档 - 完整版
 
-## 1. 概述
+本文档内容已合并到 `api_interface_design.md` 文件中。
 
-本文档描述了万里后端系统的所有API接口，包括用户认证、用户管理和系统健康检查等功能模块。
-
-**基础信息：**
-- 项目名称: 万里后端系统
-- 版本: v1.0.0
-- 认证方式: JWT Token
-- 内容类型: `application/json`
-- 字符编码: `UTF-8`
-
-**环境配置：**
-
-| 环境 | 基础URL | 描述 |
-|------|---------|------|
-| 开发环境 | `http://localhost:8080` | 本地开发环境 |
-| 测试环境 | `https://wanli-backend-staging.railway.app` | Railway Staging 环境 |
-| 生产环境 | `https://wanli-backend.railway.app` | Railway Production 环境 |
+请查看 `api_interface_design.md` 获取完整的API接口文档。
 
 ## 2. 认证接口
 

@@ -1,0 +1,4 @@
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100   593    0   545  100    48   1085     95 --:--:-- --:--:-- --:--:--  1181
+{"success":true,"code":"0000","message":"登录成功","data":{"accessToken":"eyJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpdGllcyI6WyJST0xFX1NUVURFTlQiXSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInN1YiI6InRlc3R1c2VyIiwiaWF0IjoxNzU2NDA3Mjg5LCJleHAiOjE3NTY0MTA4ODl9.1xWJKhYv1CN-NE2frxUwdqBPLBa8kUNyrfc_KEX5dWU","tokenType":"Bearer","expiresIn":3600,"user":{"userId":"59bcbf22-ce46-407a-9a23-1a90b4eb6fb4","username":"testuser","email":"test@example.com","fullName":"Test User","role":"STUDENT","lastLoginAt":"2025-08-29T02:54:49.939459+08:00"}},"timestamp":1756407289999}

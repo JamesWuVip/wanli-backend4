@@ -1,0 +1,34 @@
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8080...
+* Connected to localhost (::1) port 8080
+> GET /api/institutions HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+> Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdXRob3JpdGllcyI6WyJST0xFX1NUVURFTlQiXSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInN1YiI6InRlc3R1c2VyIiwiaWF0IjoxNzU2NDA3Mjg5LCJleHAiOjE3NTY0MTA4ODl9.1xWJKhYv1CN-NE2frxUwdqBPLBa8kUNyrfc_KEX5dWU
+> Content-Type: application/json
+> 
+* Request completely sent off
+< HTTP/1.1 500 
+< Vary: Origin
+< Vary: Access-Control-Request-Method
+< Vary: Access-Control-Request-Headers
+< X-Content-Type-Options: nosniff
+< X-XSS-Protection: 0
+< Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+< Pragma: no-cache
+< Expires: 0
+< X-Frame-Options: DENY
+< Content-Type: application/json
+< Transfer-Encoding: chunked
+< Date: Thu, 28 Aug 2025 19:04:11 GMT
+< Connection: close
+< 
+{ [60 bytes data]
+100    54    0    54    0     0    310      0 --:--:-- --:--:-- --:--:--   312
+* Closing connection
+{"success":false,"message":"获取机构列表失败"}

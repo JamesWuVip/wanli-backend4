@@ -3,7 +3,7 @@ package com.wanli.dto;
 import com.wanli.entity.Course;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -19,8 +19,8 @@ public class CourseResponseDto {
     private Course.GradeLevel gradeLevel;
     private Course.Subject subject;
     private String createdBy;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private Boolean isActive;
     private Integer lessonCount;
 

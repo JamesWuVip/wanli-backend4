@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -43,6 +44,16 @@ public class UserController {
     }
     
     /**
+     * 获取当前用户信息
+     */
+    @GetMapping("/me")
+    public ApiResponse<User> getCurrentUser(Authentication authentication) {
+        log.info("获取当前用户信息请求: {}", authentication.getName());
+        User user = userService.getUserByUsername(authentication.getName());
+        return ApiResponse.success(user);
+    }
+    
+    /**
      * 根据ID获取用户
      */
     @GetMapping("/{id}")
@@ -63,13 +74,18 @@ public class UserController {
     }
     
     /**
-     * 获取所有用户
+     * 获取所有用户或按角色查询用户
      */
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ApiResponse<List<User>> getAllUsers() {
-        log.info("获取所有用户请求");
-        List<User> users = userService.getAllUsers();
+    @PreAuthorize("hasRole('ADMIN') or (hasRole('STUDENT') and #role == 'STUDENT') or (hasRole('TEACHER') and #role == 'TEACHER')")
+    public ApiResponse<List<User>> getAllUsers(@RequestParam(required = false) String role) {
+        log.info("获取用户请求，角色过滤: {}", role);
+        List<User> users;
+        if (role != null && !role.isEmpty()) {
+            users = userService.getUsersByRole(role);
+        } else {
+            users = userService.getAllUsers();
+        }
         return ApiResponse.success(users);
     }
     

@@ -140,4 +140,9 @@ public interface UserService {
      */
     List<User> getAllUsers();
     
+    /**
+     * 根据角色获取用户列表
+     */
+    List<User> getUsersByRole(String role);
+    
 }

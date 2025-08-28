@@ -51,6 +51,13 @@ public class Course extends BaseEntity {
     private Integer lessonCount = 0;
 
     /**
+     * 多对一关系：课程所属机构
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id")
+    private Institution institution;
+
+    /**
      * 课程和班级的多对多关系
      */
     @ManyToMany(mappedBy = "courses")

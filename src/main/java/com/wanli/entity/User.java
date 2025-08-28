@@ -10,15 +10,15 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * 用户实体类
+ * 用户实体类 - 优化版本用于JWT认证
+ * T-012: 用户认证数据库优化
  * 
  * @author wanli
- * @version 1.0.0
+ * @version 1.6.0
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -77,8 +77,12 @@ public class User extends BaseEntity {
     @Column(name = "locked_until")
     private OffsetDateTime lockedUntil;
     
-    @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+    /**
+     * 多对一关系：用户所属机构
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id")
+    private Institution institution;
     
     /**
      * 检查用户是否被锁定
@@ -133,198 +137,19 @@ public class User extends BaseEntity {
         resetLoginAttempts();
     }
     
-    // 手动添加builder方法以解决Lombok注解处理器问题
-    public static UserBuilder builder() {
-        return new UserBuilder();
+    /**
+     * 检查用户是否已删除
+     * @return 是否已删除
+     */
+    public boolean isDeleted() {
+        return getDeletedAt() != null;
     }
     
-    public static class UserBuilder {
-        private String username;
-        private String passwordHash;
-        private String email;
-        private String fullName;
-        private String phoneNumber;
-        private UUID franchiseId;
-        private UserRole role;
-        private UserStatus status = UserStatus.ACTIVE;
-        private OffsetDateTime lastLoginAt;
-        private Integer loginAttempts = 0;
-        private OffsetDateTime lockedUntil;
-        private OffsetDateTime deletedAt;
-        
-        public UserBuilder username(String username) {
-            this.username = username;
-            return this;
-        }
-        
-        public UserBuilder passwordHash(String passwordHash) {
-            this.passwordHash = passwordHash;
-            return this;
-        }
-        
-        public UserBuilder email(String email) {
-            this.email = email;
-            return this;
-        }
-        
-        public UserBuilder fullName(String fullName) {
-            this.fullName = fullName;
-            return this;
-        }
-        
-        public UserBuilder phoneNumber(String phoneNumber) {
-            this.phoneNumber = phoneNumber;
-            return this;
-        }
-        
-        public UserBuilder franchiseId(UUID franchiseId) {
-            this.franchiseId = franchiseId;
-            return this;
-        }
-        
-        public UserBuilder role(UserRole role) {
-            this.role = role;
-            return this;
-        }
-        
-        public UserBuilder status(UserStatus status) {
-            this.status = status;
-            return this;
-        }
-        
-        public UserBuilder lastLoginAt(OffsetDateTime lastLoginAt) {
-            this.lastLoginAt = lastLoginAt;
-            return this;
-        }
-        
-        public UserBuilder loginAttempts(Integer loginAttempts) {
-            this.loginAttempts = loginAttempts;
-            return this;
-        }
-        
-        public UserBuilder lockedUntil(OffsetDateTime lockedUntil) {
-            this.lockedUntil = lockedUntil;
-            return this;
-        }
-        
-        public UserBuilder deletedAt(OffsetDateTime deletedAt) {
-            this.deletedAt = deletedAt;
-            return this;
-        }
-        
-        public User build() {
-            User user = new User();
-            user.username = this.username;
-            user.passwordHash = this.passwordHash;
-            user.email = this.email;
-            user.fullName = this.fullName;
-            user.phoneNumber = this.phoneNumber;
-            user.franchiseId = this.franchiseId;
-            user.role = this.role;
-            user.status = this.status;
-            user.lastLoginAt = this.lastLoginAt;
-            user.loginAttempts = this.loginAttempts;
-            user.lockedUntil = this.lockedUntil;
-            user.deletedAt = this.deletedAt;
-            return user;
-        }
-    }
-    
-    // 手动添加getter方法以解决Lombok注解处理器问题
-    public UserStatus getStatus() {
-        return status;
-    }
-    
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-    
-    public String getUsername() {
-        return username;
-    }
-    
-    public String getEmail() {
-        return email;
-    }
-    
-    public UserRole getRole() {
-        return role;
-    }
-    
-    public String getFullName() {
-        return fullName;
-    }
-    
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-    
-    public UUID getFranchiseId() {
-        return franchiseId;
-    }
-    
-    public OffsetDateTime getLastLoginAt() {
-        return lastLoginAt;
-    }
-    
-    public Integer getLoginAttempts() {
-        return loginAttempts;
-    }
-    
-    public OffsetDateTime getLockedUntil() {
-        return lockedUntil;
-    }
-    
-    public OffsetDateTime getDeletedAt() {
-        return deletedAt;
-    }
-    
-    // 手动添加setter方法以解决Lombok注解处理器问题
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-    
-    public void setLockedUntil(OffsetDateTime lockedUntil) {
-        this.lockedUntil = lockedUntil;
-    }
-    
-    public void setLoginAttempts(Integer loginAttempts) {
-        this.loginAttempts = loginAttempts;
-    }
-    
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-    
-    public void setFranchiseId(UUID franchiseId) {
-        this.franchiseId = franchiseId;
-    }
-    
-    public void setStatus(UserStatus status) {
-        this.status = status;
-    }
-    
-    public void setLastLoginAt(OffsetDateTime lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-    
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
-    
-    public void setRole(UserRole role) {
-        this.role = role;
-    }
-    
-    public void setUsername(String username) {
-        this.username = username;
-    }
-    
-    public void setDeletedAt(OffsetDateTime deletedAt) {
-        this.deletedAt = deletedAt;
+    /**
+     * 软删除用户
+     */
+    public void softDelete() {
+        this.setDeletedAt(java.time.LocalDateTime.now());
+        this.status = UserStatus.DELETED;
     }
 }
