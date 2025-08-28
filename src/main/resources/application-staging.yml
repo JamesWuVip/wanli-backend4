@@ -2,8 +2,6 @@
 # 服务器配置
 server:
   port: ${PORT:8080}
-  servlet:
-    context-path: /api
 
 spring:
   application:
