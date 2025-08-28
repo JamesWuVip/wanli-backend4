@@ -100,21 +100,32 @@ spring:
     username: ${DATABASE_USERNAME:staging_user}
     password: ${DATABASE_PASSWORD:staging_password}
     driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+  hikari:
+    maximum-pool-size: 25
+    minimum-idle: 10
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1800000
+    leak-detection-threshold: 60000
 ```
 
 **连接信息**:
 
-* **主机**: localhost (本地) / Railway (部署时)
+* **主机**: localhost (本地) / Railway PostgreSQL Host (部署时)
 
-* **端口**: 5432
+* **端口**: 5432 (本地) / Railway 动态端口 (部署时)
 
-* **数据库名**: wanli\_backend\_staging
+* **数据库名**: wanli\_backend\_staging (本地) / railway (Railway)
 
-* **用户名**: staging\_user
+* **用户名**: staging\_user (本地) / postgres (Railway)
 
-* **密码**: staging\_password
+* **密码**: staging\_password (本地) / Railway 自动生成 (Railway)
 
-* **JDBC URL**: `jdbc:postgresql://localhost:5432/wanli_backend_staging`
+* **JDBC URL**: `jdbc:postgresql://localhost:5432/wanli_backend_staging` (本地) / `${DATABASE_URL}` (Railway)
 
 **环境变量**:
 
@@ -124,11 +135,28 @@ spring:
 
 * `DATABASE_PASSWORD`: 数据库密码
 
+* `SPRING_PROFILES_ACTIVE`: staging
+
 **psql 连接命令**:
 
 ```bash
+# 本地连接
 psql -h localhost -U staging_user -d wanli_backend_staging
+
+# Railway 连接
+railway environment staging
+railway connect
+railway run psql $DATABASE_URL
 ```
+
+**HikariCP 连接池参数 (预发布)**:
+
+* **最大连接数**: 25
+* **最小空闲连接**: 10
+* **连接超时**: 30000ms
+* **空闲超时**: 600000ms
+* **最大生命周期**: 1800000ms
+* **泄漏检测阈值**: 60000ms
 
 ### 4. 生产环境 (Production) - Railway 部署
 
@@ -353,17 +381,19 @@ psql -h localhost -U test_user -d wanli_backend_test
 
 Railway 会自动提供以下环境变量：
 
-* `DATABASE_URL`: 完整的 PostgreSQL 连接字符串
+* `DATABASE_URL`: 完整的 PostgreSQL 连接字符串 (主要使用)
 
-* `PGHOST`: 数据库主机地址
+* `DATABASE_PRIVATE_URL`: 内部网络连接URL
 
-* `PGPORT`: 数据库端口
+* `DATABASE_HOST`: 数据库主机地址
 
-* `PGDATABASE`: 数据库名称
+* `DATABASE_PORT`: 数据库端口
 
-* `PGUSER`: 数据库用户名
+* `DATABASE_NAME`: 数据库名称 (通常为 railway)
 
-* `PGPASSWORD`: 数据库密码
+* `DATABASE_USERNAME`: 数据库用户名 (通常为 postgres)
+
+* `DATABASE_PASSWORD`: 数据库密码 (Railway自动生成)
 
 ### Railway CLI 常用命令
 

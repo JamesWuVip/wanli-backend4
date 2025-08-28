@@ -135,7 +135,7 @@ DATABASE_PASSWORD=[Railway自动生成]
 
 # 应用配置
 SPRING_PROFILES_ACTIVE=production
-PORT=8080
+PORT=${PORT:8080}
 APP_VERSION=1.0.0
 
 # JWT配置
@@ -278,7 +278,7 @@ railway logs
 ## 数据库配置
 
 ### 本地开发环境 (Development)
-- **数据库类型**: PostgreSQL (不是MySQL)
+- **数据库类型**: PostgreSQL 14+
 - **主机**: localhost
 - **端口**: 5432
 - **数据库名**: wanli_backend_dev
@@ -297,6 +297,20 @@ psql -h localhost -U dev_user -d wanli_backend_dev
 - **版本**: PostgreSQL 17.6
 - **客户端版本**: psql 14.18
 - **连接方式**: 通过Railway环境变量DATABASE_URL自动配置
+
+**注意**: Railway 会自动为每个环境创建独立的 PostgreSQL 数据库实例
+
+#### Staging 环境数据库
+- **服务名**: PostgreSQL
+- **数据库名**: railway (Railway 默认)
+- **连接信息**: 通过环境变量自动注入
+- **版本**: PostgreSQL 17.6
+
+#### Production 环境数据库
+- **服务名**: PostgreSQL
+- **数据库名**: railway (Railway 默认)
+- **连接信息**: 通过环境变量自动注入
+- **版本**: PostgreSQL 17.6
 
 ### 数据库连接池配置对比
 

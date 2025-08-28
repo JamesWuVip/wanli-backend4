@@ -415,10 +415,8 @@ public class Lesson extends BaseEntity {
 ```java
 public enum LessonStatus {
     DRAFT("草稿"),
-    ACTIVE("激活"),
-    INACTIVE("未激活"),
-    ARCHIVED("已归档"),
-    DELETED("已删除");
+    PUBLISHED("已发布"),
+    ARCHIVED("已归档");
     
     private final String displayName;
     
@@ -890,8 +888,5 @@ VALUES (
 * IDE: IntelliJ IDEA
 * 数据库工具: DBeaver
 * API测试: Postman
-* 版本控制: Git{}
-
-```
-```
+* 版本控制: Git
 
