@@ -51,8 +51,8 @@ class CustomUserDetailsServiceTest {
         testUser.setFullName("Test User");
         testUser.setRole(UserRole.STUDENT);
         testUser.setStatus(UserStatus.ACTIVE);
-        testUser.setCreatedAt(OffsetDateTime.now());
-        testUser.setUpdatedAt(OffsetDateTime.now());
+        testUser.setCreatedAt(java.time.LocalDateTime.now());
+        testUser.setUpdatedAt(java.time.LocalDateTime.now());
     }
 
     @Test

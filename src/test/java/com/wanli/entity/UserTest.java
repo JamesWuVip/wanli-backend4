@@ -68,11 +68,11 @@ class UserTest extends TestBase {
     void timestamps_AutoSet() {
         // Given
         User newUser = new User();
-        OffsetDateTime before = OffsetDateTime.now().minusSeconds(1);
+        java.time.LocalDateTime before = java.time.LocalDateTime.now().minusSeconds(1);
         
         // When - 模拟JPA的@PrePersist行为
         newUser.onCreate();
-        OffsetDateTime after = OffsetDateTime.now().plusSeconds(1);
+        java.time.LocalDateTime after = java.time.LocalDateTime.now().plusSeconds(1);
         
         // Then
         assertThat(newUser.getCreatedAt()).isBetween(before, after);
