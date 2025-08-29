@@ -3,7 +3,7 @@ package com.wanli.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -30,9 +30,7 @@ public class JacksonConfig {
         // 注册JavaTimeModule处理Java 8时间类型
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         
-        // 配置LocalDateTime序列化格式
-        javaTimeModule.addSerializer(java.time.LocalDateTime.class, 
-            new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
+        // OffsetDateTime使用默认序列化格式
         
         mapper.registerModule(javaTimeModule);
         

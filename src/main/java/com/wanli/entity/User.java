@@ -149,7 +149,7 @@ public class User extends BaseEntity {
      * 软删除用户
      */
     public void softDelete() {
-        this.setDeletedAt(java.time.LocalDateTime.now());
+        this.setDeletedAt(java.time.OffsetDateTime.now());
         this.status = UserStatus.DELETED;
     }
 }

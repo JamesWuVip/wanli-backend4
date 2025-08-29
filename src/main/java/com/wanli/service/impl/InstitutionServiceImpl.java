@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,8 +43,8 @@ public class InstitutionServiceImpl implements InstitutionService {
         
         // 设置ID和创建时间
         institution.setId(UUID.randomUUID());
-        institution.setCreatedAt(LocalDateTime.now());
-        institution.setUpdatedAt(LocalDateTime.now());
+        institution.setCreatedAt(OffsetDateTime.now());
+        institution.setUpdatedAt(OffsetDateTime.now());
         
         // 设置默认状态
         if (institution.getStatus() == null) {
@@ -148,7 +148,7 @@ public class InstitutionServiceImpl implements InstitutionService {
         existingInstitution.setContactPhone(institution.getContactPhone());
         existingInstitution.setAddress(institution.getAddress());
         existingInstitution.setStatus(institution.getStatus());
-        existingInstitution.setUpdatedAt(LocalDateTime.now());
+        existingInstitution.setUpdatedAt(OffsetDateTime.now());
         existingInstitution.setUpdatedBy(institution.getUpdatedBy());
         
         Institution updatedInstitution = institutionRepository.save(existingInstitution);
@@ -166,7 +166,7 @@ public class InstitutionServiceImpl implements InstitutionService {
                 .orElseThrow(() -> new IllegalArgumentException("机构不存在: " + id));
         
         institution.setStatus(status);
-        institution.setUpdatedAt(LocalDateTime.now());
+        institution.setUpdatedAt(OffsetDateTime.now());
         
         Institution updatedInstitution = institutionRepository.save(institution);
         log.info("Institution status updated successfully: {}", updatedInstitution.getId());
@@ -183,8 +183,8 @@ public class InstitutionServiceImpl implements InstitutionService {
                 .orElseThrow(() -> new IllegalArgumentException("机构不存在: " + id));
         
         // 软删除
-        institution.setDeletedAt(LocalDateTime.now());
-        institution.setUpdatedAt(LocalDateTime.now());
+        institution.setDeletedAt(OffsetDateTime.now());
+        institution.setUpdatedAt(OffsetDateTime.now());
         
         institutionRepository.save(institution);
         log.info("Institution deleted successfully: {}", id);

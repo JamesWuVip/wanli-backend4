@@ -4,7 +4,7 @@ import lombok.Data;
 // 移除JPA审计相关导入
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
@@ -23,10 +23,10 @@ public abstract class BaseEntity {
     private UUID id;
     
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
     
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
     
     @Column(name = "created_by", updatable = false)
     private String createdBy;
@@ -35,18 +35,18 @@ public abstract class BaseEntity {
     private String updatedBy;
     
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
     
     // 手动添加getter方法以解决Lombok注解处理器问题
     public UUID getId() {
         return id;
     }
     
-    public LocalDateTime getCreatedAt() {
+    public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
     
-    public LocalDateTime getUpdatedAt() {
+    public OffsetDateTime getUpdatedAt() {
         return updatedAt;
     }
     
@@ -63,11 +63,11 @@ public abstract class BaseEntity {
         this.id = id;
     }
     
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
     
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(OffsetDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
     
@@ -79,11 +79,11 @@ public abstract class BaseEntity {
         this.updatedBy = updatedBy;
     }
     
-    public LocalDateTime getDeletedAt() {
+    public OffsetDateTime getDeletedAt() {
         return deletedAt;
     }
     
-    public void setDeletedAt(LocalDateTime deletedAt) {
+    public void setDeletedAt(OffsetDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
     
@@ -92,13 +92,13 @@ public abstract class BaseEntity {
         if (this.id == null) {
             this.id = UUID.randomUUID();
         }
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
     }
     
     @PreUpdate
     public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = OffsetDateTime.now();
     }
 }

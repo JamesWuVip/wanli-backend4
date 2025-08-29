@@ -3,7 +3,7 @@ package com.wanli.dto;
 import com.wanli.entity.InstitutionStatus;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 机构响应DTO
@@ -59,17 +59,17 @@ public class InstitutionResponseDTO {
     /**
      * 创建时间
      */
-    private LocalDateTime createdAt;
-
+    private OffsetDateTime createdAt;
+    
     /**
      * 更新时间
      */
-    private LocalDateTime updatedAt;
-
+    private OffsetDateTime updatedAt;
+    
     /**
      * 删除时间
      */
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
 
     /**
      * 用户数量（关联的用户数）

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,7 +44,7 @@ public class HealthController {
         healthInfo.put("status", "UP");
         healthInfo.put("application", applicationName);
         healthInfo.put("profile", activeProfile);
-        healthInfo.put("timestamp", LocalDateTime.now());
+        healthInfo.put("timestamp", OffsetDateTime.now());
         healthInfo.put("version", "1.0.0");
         
         return ResponseEntity.ok(ApiResponse.success("系统运行正常", healthInfo));
@@ -63,7 +63,7 @@ public class HealthController {
         systemInfo.put("javaVersion", System.getProperty("java.version"));
         systemInfo.put("osName", System.getProperty("os.name"));
         systemInfo.put("osVersion", System.getProperty("os.version"));
-        systemInfo.put("timestamp", LocalDateTime.now());
+        systemInfo.put("timestamp", OffsetDateTime.now());
         
         return ResponseEntity.ok(ApiResponse.success("获取系统信息成功", systemInfo));
     }
