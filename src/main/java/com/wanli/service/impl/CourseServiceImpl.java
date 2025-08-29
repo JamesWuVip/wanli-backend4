@@ -44,16 +44,13 @@ public class CourseServiceImpl implements CourseService {
         
         // 设置课程基本信息
         course.setCourseCode(generateCourseCode());
-        course.setCourseName(courseCreateDto.getCourseName());
         course.setTitle(courseCreateDto.getCourseName());
         course.setDescription(courseCreateDto.getCourseDescription());
         course.setGradeLevel(courseCreateDto.getGradeLevel());
         course.setSubject(courseCreateDto.getSubject());
         course.setCreatedBy(createdBy.toString());
         course.setCreatorId(createdBy);
-        course.setCourseId(UUID.randomUUID());
         course.setIsActive(true);
-        course.setLessonCount(0);
 
         // 保存课程
         Course savedCourse = courseRepository.save(course);
@@ -111,7 +108,6 @@ public class CourseServiceImpl implements CourseService {
         }
 
         // 更新课程信息
-        course.setCourseName(courseCreateDto.getCourseName());
         course.setTitle(courseCreateDto.getCourseName());
         course.setDescription(courseCreateDto.getCourseDescription());
         course.setGradeLevel(courseCreateDto.getGradeLevel());

@@ -109,17 +109,5 @@ public interface InstitutionRepository extends JpaRepository<Institution, UUID> 
     @Query("SELECT i FROM Institution i WHERE i.status = 'ACTIVE' ORDER BY i.createdAt DESC")
     List<Institution> findActiveInstitutions();
 
-    /**
-     * 根据联系邮箱查找机构
-     * @param contactEmail 联系邮箱
-     * @return 机构信息
-     */
-    Optional<Institution> findByContactEmail(String contactEmail);
 
-    /**
-     * 根据联系电话查找机构
-     * @param contactPhone 联系电话
-     * @return 机构信息
-     */
-    Optional<Institution> findByContactPhone(String contactPhone);
 }

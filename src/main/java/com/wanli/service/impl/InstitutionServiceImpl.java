@@ -141,12 +141,8 @@ public class InstitutionServiceImpl implements InstitutionService {
             throw new IllegalArgumentException("机构名称已存在: " + institution.getName());
         }
         
-        // 更新字段
+        // 更新字段 - 只更新Institution实体类中存在的字段
         existingInstitution.setName(institution.getName());
-        existingInstitution.setDescription(institution.getDescription());
-        existingInstitution.setContactEmail(institution.getContactEmail());
-        existingInstitution.setContactPhone(institution.getContactPhone());
-        existingInstitution.setAddress(institution.getAddress());
         existingInstitution.setStatus(institution.getStatus());
         existingInstitution.setUpdatedAt(OffsetDateTime.now());
         existingInstitution.setUpdatedBy(institution.getUpdatedBy());
@@ -230,22 +226,6 @@ public class InstitutionServiceImpl implements InstitutionService {
             throw new IllegalArgumentException("机构名称长度不能超过100个字符");
         }
         
-        if (institution.getDescription() != null && institution.getDescription().length() > 500) {
-            throw new IllegalArgumentException("机构描述长度不能超过500个字符");
-        }
-        
-        if (StringUtils.hasText(institution.getContactEmail()) && 
-            !institution.getContactEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new IllegalArgumentException("联系邮箱格式不正确");
-        }
-        
-        if (StringUtils.hasText(institution.getContactPhone()) && 
-            !institution.getContactPhone().matches("^[0-9-+()\\s]+$")) {
-            throw new IllegalArgumentException("联系电话格式不正确");
-        }
-        
-        if (institution.getAddress() != null && institution.getAddress().length() > 200) {
-            throw new IllegalArgumentException("地址长度不能超过200个字符");
-        }
+        // Institution实体类中只有name和status字段，移除其他字段的验证
     }
 }

@@ -31,7 +31,7 @@ public class CourseResponseDto {
         CourseResponseDto dto = new CourseResponseDto();
         dto.setId(course.getId());
         dto.setCourseCode(course.getCourseCode());
-        dto.setCourseName(course.getCourseName());
+        dto.setCourseName(course.getTitle());
         dto.setCourseDescription(course.getDescription());
         dto.setGradeLevel(course.getGradeLevel());
         dto.setSubject(course.getSubject());
@@ -39,7 +39,7 @@ public class CourseResponseDto {
         dto.setCreatedAt(course.getCreatedAt());
         dto.setUpdatedAt(course.getUpdatedAt());
         dto.setIsActive(course.getIsActive());
-        dto.setLessonCount(course.getLessonCount());
+        dto.setLessonCount(0); // Course实体类中没有lessonCount字段，设置为默认值
         return dto;
     }
 }

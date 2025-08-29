@@ -33,29 +33,7 @@ public class Institution extends BaseEntity {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    /**
-     * 机构描述
-     */
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
-    /**
-     * 联系邮箱
-     */
-    @Column(name = "contact_email", length = 100)
-    private String contactEmail;
-
-    /**
-     * 联系电话
-     */
-    @Column(name = "contact_phone", length = 20)
-    private String contactPhone;
-
-    /**
-     * 地址
-     */
-    @Column(name = "address", columnDefinition = "TEXT")
-    private String address;
+    // 注意：franchises表中只有name和status字段，其他字段已移除以匹配数据库结构
 
     /**
      * 机构状态

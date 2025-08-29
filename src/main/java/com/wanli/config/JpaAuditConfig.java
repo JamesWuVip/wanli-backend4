@@ -17,7 +17,6 @@ import java.util.Optional;
  * @version 1.0.0
  */
 @Configuration
-@EnableJpaAuditing(auditorAwareRef = "auditorProvider")
 public class JpaAuditConfig {
     
     /**

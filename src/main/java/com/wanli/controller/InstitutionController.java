@@ -334,16 +334,18 @@ public class InstitutionController {
         // 手动设置字段以避免类型转换问题
         responseDTO.setId(institution.getId().toString());
         responseDTO.setName(institution.getName());
-        responseDTO.setDescription(institution.getDescription());
-        responseDTO.setContactEmail(institution.getContactEmail());
-        responseDTO.setContactPhone(institution.getContactPhone());
-        responseDTO.setAddress(institution.getAddress());
         responseDTO.setStatus(institution.getStatus());
         responseDTO.setCreatedBy(institution.getCreatedBy());
         responseDTO.setUpdatedBy(institution.getUpdatedBy());
         responseDTO.setCreatedAt(institution.getCreatedAt());
         responseDTO.setUpdatedAt(institution.getUpdatedAt());
         responseDTO.setDeletedAt(institution.getDeletedAt());
+        
+        // Institution实体类中没有这些字段，设置为null或默认值
+        responseDTO.setDescription(null);
+        responseDTO.setContactEmail(null);
+        responseDTO.setContactPhone(null);
+        responseDTO.setAddress(null);
         
         // 这里可以添加关联数据的统计，如用户数、课程数、学员数
         // 由于当前没有实现这些关联，暂时设置为0

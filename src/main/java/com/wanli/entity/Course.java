@@ -33,22 +33,15 @@ public class Course extends BaseEntity {
     @Column(name = "subject", nullable = false)
     private Subject subject;
 
-    // createdBy字段已在BaseEntity中定义，这里不需要重复定义
-    
     @Column(name = "creator_id", nullable = false)
     private UUID creatorId;
-    
-    @Column(name = "course_id", nullable = false)
-    private UUID courseId;
-    
-    @Column(name = "course_name", nullable = false)
-    private String courseName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private CourseStatus status = CourseStatus.DRAFT;
 
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
-
-    @Column(name = "lesson_count")
-    private Integer lessonCount = 0;
 
     /**
      * 多对一关系：课程所属机构
@@ -96,6 +89,24 @@ public class Course extends BaseEntity {
         private final String displayName;
 
         Subject(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    /**
+     * 课程状态枚举
+     */
+    public enum CourseStatus {
+        DRAFT("草稿"),
+        PUBLISHED("已发布");
+
+        private final String displayName;
+
+        CourseStatus(String displayName) {
             this.displayName = displayName;
         }
 

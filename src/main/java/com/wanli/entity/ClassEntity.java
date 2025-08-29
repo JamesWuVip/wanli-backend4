@@ -73,6 +73,13 @@ public class ClassEntity extends BaseEntity {
     private Semester semester;
 
     /**
+     * 多对一关系：班级所属机构
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "institution_id")
+    private Institution institution;
+
+    /**
      * 班级和课程的多对多关系
      */
     @ManyToMany

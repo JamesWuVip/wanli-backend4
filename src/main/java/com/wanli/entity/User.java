@@ -55,9 +55,6 @@ public class User extends BaseEntity {
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
     
-    @Column(name = "franchise_id")
-    private UUID franchiseId;
-    
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private UserRole role;

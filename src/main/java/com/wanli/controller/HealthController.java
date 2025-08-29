@@ -22,7 +22,6 @@ import java.util.Map;
  * @version 1.0.0
  */
 @RestController
-@RequestMapping("/api")
 @Tag(name = "系统监控", description = "系统健康检查和监控接口")
 public class HealthController {
     
