@@ -134,6 +134,10 @@ public class AuthServiceImpl implements AuthService {
      * 转换User实体为UserResponseDto
      */
     private UserResponseDto convertToUserResponseDto(User user) {
+        // 将LocalDateTime转换为OffsetDateTime
+        OffsetDateTime createdAt = user.getCreatedAt() != null ? 
+            user.getCreatedAt().atOffset(OffsetDateTime.now().getOffset()) : null;
+            
         return UserResponseDto.builder()
                 .userId(user.getId())
                 .username(user.getUsername())
@@ -141,7 +145,7 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
+                .createdAt(createdAt)
                 .lastLoginAt(user.getLastLoginAt())
                 .isActive(user.getStatus() == UserStatus.ACTIVE)
                 .build();

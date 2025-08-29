@@ -34,8 +34,8 @@ public class TestDataFactory {
         user.setRole(UserRole.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         user.setLoginAttempts(0);
-        user.setCreatedAt(OffsetDateTime.now());
-        user.setUpdatedAt(OffsetDateTime.now());
+        user.setCreatedAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
         return user;
     }
     
@@ -52,8 +52,8 @@ public class TestDataFactory {
         user.setRole(UserRole.ADMIN);
         user.setStatus(UserStatus.ACTIVE);
         user.setLoginAttempts(0);
-        user.setCreatedAt(OffsetDateTime.now());
-        user.setUpdatedAt(OffsetDateTime.now());
+        user.setCreatedAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
         return user;
     }
     
@@ -70,8 +70,8 @@ public class TestDataFactory {
         user.setRole(UserRole.HQ_TEACHER);
         user.setStatus(UserStatus.ACTIVE);
         user.setLoginAttempts(0);
-        user.setCreatedAt(OffsetDateTime.now());
-        user.setUpdatedAt(OffsetDateTime.now());
+        user.setCreatedAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
         return user;
     }
     
@@ -99,8 +99,8 @@ public class TestDataFactory {
         user.setRole(role);
         user.setStatus(status);
         user.setLoginAttempts(0);
-        user.setCreatedAt(OffsetDateTime.now());
-        user.setUpdatedAt(OffsetDateTime.now());
+        user.setCreatedAt(java.time.LocalDateTime.now());
+        user.setUpdatedAt(java.time.LocalDateTime.now());
         return user;
     }
     

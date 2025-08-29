@@ -1,789 +1,1050 @@
-# 万里教育后台管理系统 API 文档
+# 万里教育后台管理系统 API 接口文档
 
 ## 概述
 
-万里教育后台管理系统提供了完整的用户管理、认证授权等功能的RESTful API接口。本文档详细描述了所有可用的API端点、请求参数、响应格式以及错误处理机制。
+万里教育后台管理系统提供完整的RESTful API接口，支持用户管理、课程管理、机构管理等核心功能。本文档详细描述了所有可用的API接口、请求参数、响应格式以及环境配置信息。
 
-**基础信息：**
-- API版本：1.0.0
-- 基础URL：`http://localhost:8080`
-- 内容类型：`application/json`
-- 字符编码：`UTF-8`
+## 环境配置
+
+### Staging 环境
+- **基础URL**: `https://wanli-backend-staging-staging.up.railway.app/api`
+- **数据库**: Railway PostgreSQL
+- **部署平台**: Railway
+- **JWT过期时间**: 1小时（访问令牌）/ 2小时（刷新令牌）
+- **日志级别**: INFO
+- **健康检查**: `/api/health`
+
+### Production 环境
+- **基础URL**: `https://your-production-domain.com/api`
+- **数据库**: 生产环境PostgreSQL
+- **部署平台**: Railway或其他云平台
+- **JWT过期时间**: 1小时（访问令牌）/ 2小时（刷新令牌）
+- **日志级别**: WARN
+- **健康检查**: `/api/health`
+
+### Development 环境
+- **基础URL**: `http://localhost:8080/api`
+- **数据库**: 本地PostgreSQL
+- **JWT过期时间**: 1小时（访问令牌）/ 2小时（刷新令牌）
+- **日志级别**: DEBUG
+- **健康检查**: `/api/health`
 
 ## 认证机制
 
-系统采用JWT（JSON Web Token）进行身份认证。除了公开接口外，所有API请求都需要在请求头中包含有效的JWT令牌。
+系统采用JWT（JSON Web Token）进行身份认证：
 
-**请求头格式：**
-```
-Authorization: Bearer <your-jwt-token>
-```
+1. **获取令牌**: 通过登录接口获取访问令牌
+2. **使用令牌**: 在请求头中添加 `Authorization: Bearer <token>`
+3. **令牌刷新**: 访问令牌过期后使用刷新令牌获取新的访问令牌
+4. **令牌过期**: 访问令牌有效期1小时，刷新令牌有效期2小时
 
 ## 统一响应格式
 
-所有API接口都采用统一的响应格式：
+所有API接口都遵循统一的响应格式：
 
 ```json
 {
-  "success": true,
-  "code": "200",
+  "code": 200,
   "message": "操作成功",
-  "data": {},
-  "timestamp": 1640995200000
+  "data": {}
 }
 ```
 
-**响应字段说明：**
-- `success`：布尔值，表示请求是否成功
-- `code`：字符串，响应状态码
-- `message`：字符串，响应消息
-- `data`：对象，响应数据（成功时包含具体数据，失败时为null）
-- `timestamp`：长整型，响应时间戳
+### 响应字段说明
+- `code`: 响应状态码，200表示成功
+- `message`: 响应消息描述
+- `data`: 响应数据，可能为对象、数组或null
 
-## 数据模型
+## 用户角色和状态枚举
 
-### 用户角色枚举 (UserRole)
+### 用户角色（UserRole）
+- `ADMIN`: 管理员，拥有所有权限
+- `TEACHER`: 教师，可以管理课程和查看学生信息
+- `STUDENT`: 学生，只能查看自己的信息
 
-| 值 | 显示名称 | 权限标识 | 描述 |
-|---|---|---|---|
-| `HQ_TEACHER` | 总部教师 | ROLE_HQ_TEACHER | 总部教师角色 |
-| `BRANCH_TEACHER` | 分校教师 | ROLE_BRANCH_TEACHER | 分校教师角色 |
-| `STUDENT` | 学生 | ROLE_STUDENT | 学生角色 |
-| `ADMIN` | 管理员 | ROLE_ADMIN | 系统管理员角色 |
+### 用户状态（UserStatus）
+- `ACTIVE`: 活跃状态，可以正常使用系统
+- `INACTIVE`: 非活跃状态，暂时无法使用系统
+- `SUSPENDED`: 暂停状态，账户被暂停使用
 
-### 用户状态枚举 (UserStatus)
+### 课程状态（CourseStatus）
+- `ACTIVE`: 活跃状态，课程正在进行
+- `INACTIVE`: 非活跃状态，课程暂停
+- `COMPLETED`: 已完成状态，课程已结束
 
-| 值 | 显示名称 | 描述 |
-|---|---|---|
-| `ACTIVE` | 激活 | 用户账户正常激活状态 |
-| `INACTIVE` | 未激活 | 用户账户未激活状态 |
-| `LOCKED` | 锁定 | 用户账户被锁定状态 |
-| `DELETED` | 已删除 | 用户账户已删除状态 |
+### 机构状态（InstitutionStatus）
+- `ACTIVE`: 活跃状态，机构正常运营
+- `INACTIVE`: 非活跃状态，机构暂停运营
+- `SUSPENDED`: 暂停状态，机构被暂停
 
-### 用户信息响应 (UserResponseDto)
+## 用户信息响应模型
 
 ```json
 {
-  "userId": "550e8400-e29b-41d4-a716-446655440000",
-  "username": "john_doe",
-  "email": "john@example.com",
-  "fullName": "张三",
-  "role": "STUDENT",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "username": "admin",
+  "email": "admin@wanli.edu",
+  "fullName": "系统管理员",
+  "phone": "13800138000",
+  "role": "ADMIN",
   "status": "ACTIVE",
-  "createdAt": "2024-01-15T10:30:00+08:00",
-  "lastLoginAt": "2024-01-20T14:25:00+08:00",
-  "isActive": true
+  "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+  "createdAt": "2024-01-15T10:30:00.000Z",
+  "updatedAt": "2024-01-15T10:30:00.000Z"
 }
 ```
 
 ## API 接口详情
 
-## 1. 认证相关接口
+### 1. 认证相关接口
 
-### 1.1 用户注册
-
-**接口地址：** `POST /api/auth/register`
-
-**接口描述：** 用户注册接口，创建新的用户账户
-
-**请求参数：**
-
+#### 用户注册
+- **接口地址**: `POST /api/auth/register`
+- **接口描述**: 注册新用户账户
+- **权限要求**: 无需认证
+- **请求参数**:
 ```json
 {
-  "username": "john_doe",
+  "username": "testuser",
   "password": "password123",
-  "email": "john@example.com",
-  "fullName": "张三",
-  "role": "STUDENT"
+  "email": "testuser@example.com",
+  "fullName": "测试用户",
+  "phone": "13800138000",
+  "role": "STUDENT",
+  "institutionId": "550e8400-e29b-41d4-a716-446655440001"
 }
 ```
-
-**参数说明：**
-
-| 参数名 | 类型 | 必填 | 验证规则 | 描述 |
-|---|---|---|---|---|
-| username | String | 是 | 3-50字符，只能包含字母、数字和下划线 | 用户名 |
-| password | String | 是 | 6-100字符 | 密码 |
-| email | String | 是 | 有效的邮箱格式 | 邮箱地址 |
-| fullName | String | 是 | 最大100字符 | 用户姓名 |
-| role | String | 否 | 枚举值：HQ_TEACHER, BRANCH_TEACHER, STUDENT, ADMIN | 用户角色，默认为STUDENT |
-
-**成功响应：**
-
+- **参数说明**:
+  - `username`: 用户名，必填，3-50字符，唯一
+  - `password`: 密码，必填，6-100字符
+  - `email`: 邮箱，必填，标准邮箱格式，唯一
+  - `fullName`: 真实姓名，必填，最大100字符
+  - `phone`: 手机号，选填，11位数字
+  - `role`: 用户角色，必填，枚举值：ADMIN、TEACHER、STUDENT
+  - `institutionId`: 所属机构ID，选填，UUID格式
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
+  "code": 200,
   "message": "用户注册成功",
   "data": {
-    "userId": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "email": "john@example.com",
-    "fullName": "张三",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "testuser",
+    "email": "testuser@example.com",
+    "fullName": "测试用户",
+    "phone": "13800138000",
     "role": "STUDENT",
     "status": "ACTIVE",
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "lastLoginAt": null,
-    "isActive": true
-  },
-  "timestamp": 1640995200000
+    "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
-**错误响应示例：**
-
+#### 用户登录
+- **接口地址**: `POST /api/auth/login`
+- **接口描述**: 用户登录获取访问令牌
+- **权限要求**: 无需认证
+- **请求参数**:
 ```json
 {
-  "success": false,
-  "code": "USER_001",
-  "message": "用户名已存在",
-  "data": null,
-  "timestamp": 1640995200000
+  "username": "admin",
+  "password": "admin123"
 }
 ```
-
-### 1.2 用户登录
-
-**接口地址：** `POST /api/auth/login`
-
-**接口描述：** 用户登录接口，验证用户凭据并返回JWT令牌
-
-**请求参数：**
-
+- **参数说明**:
+  - `username`: 用户名，必填
+  - `password`: 密码，必填
+- **成功响应**:
 ```json
 {
-  "username": "john_doe",
-  "password": "password123"
-}
-```
-
-**参数说明：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| username | String | 是 | 用户名 |
-| password | String | 是 | 密码 |
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "code": "200",
+  "code": 200,
   "message": "登录成功",
   "data": {
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "tokenType": "Bearer",
     "expiresIn": 3600,
     "user": {
-      "userId": "550e8400-e29b-41d4-a716-446655440000",
-      "username": "john_doe",
-      "email": "john@example.com",
-      "fullName": "张三",
-      "role": "STUDENT",
-      "lastLoginAt": "2024-01-20T14:25:00+08:00"
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "username": "admin",
+      "email": "admin@wanli.edu",
+      "fullName": "系统管理员",
+      "role": "ADMIN",
+      "status": "ACTIVE"
     }
-  },
-  "timestamp": 1640995200000
+  }
 }
 ```
 
-### 1.3 获取当前用户信息
-
-**接口地址：** `GET /api/auth/me`
-
-**接口描述：** 获取当前登录用户的详细信息
-
-**请求头：**
-```
-Authorization: Bearer <your-jwt-token>
-```
-
-**成功响应：**
-
+#### 获取当前用户信息
+- **接口地址**: `GET /api/auth/me`
+- **接口描述**: 获取当前登录用户的详细信息
+- **权限要求**: 需要认证
+- **请求头**: `Authorization: Bearer <token>`
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
+  "code": 200,
+  "message": "获取用户信息成功",
   "data": {
-    "userId": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "email": "john@example.com",
-    "fullName": "张三",
-    "role": "STUDENT",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "admin",
+    "email": "admin@wanli.edu",
+    "fullName": "系统管理员",
+    "phone": "13800138000",
+    "role": "ADMIN",
     "status": "ACTIVE",
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "lastLoginAt": "2024-01-20T14:25:00+08:00",
-    "isActive": true
-  },
-  "timestamp": 1640995200000
+    "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
-### 1.4 用户登出
-
-**接口地址：** `POST /api/auth/logout`
-
-**接口描述：** 用户登出接口，使JWT令牌失效
-
-**请求头：**
-```
-Authorization: Bearer <your-jwt-token>
-```
-
-**成功响应：**
-
+#### 用户登出
+- **接口地址**: `POST /api/auth/logout`
+- **接口描述**: 用户登出，使当前令牌失效
+- **权限要求**: 需要认证
+- **请求头**: `Authorization: Bearer <token>`
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
+  "code": 200,
   "message": "登出成功",
-  "data": null,
-  "timestamp": 1640995200000
+  "data": null
 }
 ```
 
-## 2. 用户管理接口
+### 2. 用户管理接口
 
-### 2.1 创建用户
+#### 创建用户
+- **接口地址**: `POST /api/users`
+- **接口描述**: 创建新用户（管理员功能）
+- **权限要求**: 需要认证，ADMIN角色
+- **请求参数**: 同用户注册接口
+- **成功响应**: 同用户注册接口
 
-**接口地址：** `POST /users`
-
-**接口描述：** 管理员创建新用户（需要管理员权限）
-
-**权限要求：** ADMIN角色
-
-**请求参数：**
-
+#### 根据ID获取用户
+- **接口地址**: `GET /api/users/{id}`
+- **接口描述**: 根据用户ID获取用户详细信息
+- **权限要求**: 需要认证
+- **路径参数**:
+  - `id`: 用户ID，UUID格式
+- **成功响应**:
 ```json
 {
-  "username": "jane_doe",
-  "password": "password123",
-  "email": "jane@example.com",
-  "fullName": "李四",
-  "role": "BRANCH_TEACHER"
-}
-```
-
-**参数说明：**
-
-| 参数名 | 类型 | 必填 | 验证规则 | 描述 |
-|---|---|---|---|---|
-| username | String | 是 | 3-20字符，只能包含字母、数字和下划线 | 用户名 |
-| password | String | 是 | 6-20字符 | 密码 |
-| email | String | 是 | 有效的邮箱格式 | 邮箱地址 |
-| fullName | String | 是 | 最大50字符 | 用户姓名 |
-| role | String | 否 | 枚举值：HQ_TEACHER, BRANCH_TEACHER, STUDENT, ADMIN | 用户角色，默认为STUDENT |
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "code": "200",
-  "message": "用户创建成功",
+  "code": 200,
+  "message": "获取用户信息成功",
   "data": {
-    "userId": "550e8400-e29b-41d4-a716-446655440001",
-    "username": "jane_doe",
-    "email": "jane@example.com",
-    "fullName": "李四",
-    "role": "BRANCH_TEACHER",
-    "status": "ACTIVE",
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "lastLoginAt": null,
-    "isActive": true
-  },
-  "timestamp": 1640995200000
-}
-```
-
-### 2.2 根据ID获取用户
-
-**接口地址：** `GET /users/{id}`
-
-**接口描述：** 根据用户ID获取用户详细信息
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| id | UUID | 是 | 用户ID |
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
-  "data": {
-    "userId": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "email": "john@example.com",
-    "fullName": "张三",
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "testuser",
+    "email": "testuser@example.com",
+    "fullName": "测试用户",
+    "phone": "13800138000",
     "role": "STUDENT",
     "status": "ACTIVE",
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "lastLoginAt": "2024-01-20T14:25:00+08:00",
-    "isActive": true
-  },
-  "timestamp": 1640995200000
+    "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z"
+  }
 }
 ```
 
-### 2.3 获取所有用户
-
-**接口地址：** `GET /users`
-
-**接口描述：** 获取所有用户列表（需要管理员权限）
-
-**权限要求：** ADMIN角色
-
-**成功响应：**
-
+#### 获取所有用户
+- **接口地址**: `GET /api/users`
+- **接口描述**: 分页获取用户列表
+- **权限要求**: 需要认证，ADMIN角色
+- **请求参数**:
+  - `page`: 页码，默认0
+  - `size`: 页大小，默认10，最大100
+  - `role`: 角色过滤，选填，枚举值：ADMIN、TEACHER、STUDENT
+  - `status`: 状态过滤，选填，枚举值：ACTIVE、INACTIVE、SUSPENDED
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
-  "data": [
-    {
-      "userId": "550e8400-e29b-41d4-a716-446655440000",
-      "username": "john_doe",
-      "email": "john@example.com",
-      "fullName": "张三",
-      "role": "STUDENT",
-      "status": "ACTIVE",
-      "createdAt": "2024-01-15T10:30:00+08:00",
-      "lastLoginAt": "2024-01-20T14:25:00+08:00",
-      "isActive": true
+  "code": 200,
+  "message": "获取用户列表成功",
+  "data": {
+    "content": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "admin",
+        "email": "admin@wanli.edu",
+        "fullName": "系统管理员",
+        "phone": "13800138000",
+        "role": "ADMIN",
+        "status": "ACTIVE",
+        "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+        "createdAt": "2024-01-15T10:30:00.000Z",
+        "updatedAt": "2024-01-15T10:30:00.000Z"
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 10
     },
-    {
-      "userId": "550e8400-e29b-41d4-a716-446655440001",
-      "username": "jane_doe",
-      "email": "jane@example.com",
-      "fullName": "李四",
-      "role": "BRANCH_TEACHER",
-      "status": "ACTIVE",
-      "createdAt": "2024-01-15T11:30:00+08:00",
-      "lastLoginAt": null,
-      "isActive": true
-    }
-  ],
-  "timestamp": 1640995200000
+    "totalElements": 1,
+    "totalPages": 1,
+    "first": true,
+    "last": true
+  }
 }
 ```
 
-### 2.4 更新用户信息
-
-**接口地址：** `PUT /users/{id}`
-
-**接口描述：** 更新指定用户的信息（需要管理员权限）
-
-**权限要求：** ADMIN角色
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| id | UUID | 是 | 用户ID |
-
-**请求参数：**
-
+#### 更新用户信息
+- **接口地址**: `PUT /api/users/{id}`
+- **接口描述**: 更新用户信息
+- **权限要求**: 需要认证，ADMIN角色或用户本人
+- **路径参数**:
+  - `id`: 用户ID，UUID格式
+- **请求参数**:
 ```json
 {
   "email": "newemail@example.com",
-  "fullName": "新姓名",
-  "role": "HQ_TEACHER"
+  "fullName": "新的真实姓名",
+  "phone": "13900139000",
+  "institutionId": "550e8400-e29b-41d4-a716-446655440002"
 }
 ```
-
-**参数说明：**
-
-| 参数名 | 类型 | 必填 | 验证规则 | 描述 |
-|---|---|---|---|---|
-| email | String | 否 | 有效的邮箱格式 | 邮箱地址 |
-| fullName | String | 否 | 最大100字符 | 用户姓名 |
-| role | String | 否 | 枚举值：HQ_TEACHER, BRANCH_TEACHER, STUDENT, ADMIN | 用户角色 |
-
-**成功响应：**
-
+- **参数说明**:
+  - `email`: 邮箱，选填，标准邮箱格式
+  - `fullName`: 真实姓名，选填，最大100字符
+  - `phone`: 手机号，选填，11位数字
+  - `institutionId`: 所属机构ID，选填，UUID格式
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
+  "code": 200,
   "message": "用户信息更新成功",
   "data": {
-    "userId": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "email": "newemail@example.com",
-    "fullName": "新姓名",
-    "role": "HQ_TEACHER",
-    "status": "ACTIVE",
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "lastLoginAt": "2024-01-20T14:25:00+08:00",
-    "isActive": true
-  },
-  "timestamp": 1640995200000
-}
-```
-
-### 2.5 删除用户
-
-**接口地址：** `DELETE /users/{id}`
-
-**接口描述：** 删除指定用户（需要管理员权限）
-
-**权限要求：** ADMIN角色
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| id | UUID | 是 | 用户ID |
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "code": "200",
-  "message": "用户删除成功",
-  "data": null,
-  "timestamp": 1640995200000
-}
-```
-
-### 2.6 根据用户名获取用户
-
-**接口地址：** `GET /users/username/{username}`
-
-**接口描述：** 根据用户名获取用户详细信息
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| username | String | 是 | 用户名 |
-
-**成功响应：**
-
-```json
-{
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
-  "data": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "username": "john_doe",
-    "passwordHash": "$2a$10$...",
-    "email": "john@example.com",
-    "fullName": "张三",
+    "username": "testuser",
+    "email": "newemail@example.com",
+    "fullName": "新的真实姓名",
+    "phone": "13900139000",
     "role": "STUDENT",
     "status": "ACTIVE",
-    "lastLoginAt": "2024-01-20T14:25:00+08:00",
-    "loginAttempts": 0,
-    "lockedUntil": null,
-    "createdAt": "2024-01-15T10:30:00+08:00",
-    "updatedAt": "2024-01-20T14:25:00+08:00",
-    "createdBy": "system",
-    "updatedBy": "john_doe",
-    "active": true,
-    "locked": false
-  },
-  "timestamp": 1640995200000
+    "institutionId": "550e8400-e29b-41d4-a716-446655440002",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T11:00:00.000Z"
+  }
 }
 ```
 
-### 2.7 检查用户名是否存在
-
-**接口地址：** `GET /users/check/username/{username}`
-
-**接口描述：** 检查指定用户名是否已存在
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| username | String | 是 | 要检查的用户名 |
-
-**成功响应：**
-
+#### 删除用户
+- **接口地址**: `DELETE /api/users/{id}`
+- **接口描述**: 删除用户（软删除）
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `id`: 用户ID，UUID格式
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
-  "data": true,
-  "timestamp": 1640995200000
+  "code": 200,
+  "message": "用户删除成功",
+  "data": null
 }
 ```
 
-**响应数据说明：**
-- `true`：用户名已存在
-- `false`：用户名不存在
+#### 根据用户名获取用户
+- **接口地址**: `GET /api/users/username/{username}`
+- **接口描述**: 根据用户名获取用户信息
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `username`: 用户名
+- **成功响应**: 同根据ID获取用户接口
 
-### 2.8 检查邮箱是否存在
-
-**接口地址：** `GET /users/check/email/{email}`
-
-**接口描述：** 检查指定邮箱是否已存在
-
-**路径参数：**
-
-| 参数名 | 类型 | 必填 | 描述 |
-|---|---|---|---|
-| email | String | 是 | 要检查的邮箱地址 |
-
-**成功响应：**
-
+#### 检查用户名是否存在
+- **接口地址**: `GET /api/users/check-username/{username}`
+- **接口描述**: 检查用户名是否已被使用
+- **权限要求**: 无需认证
+- **路径参数**:
+  - `username`: 用户名
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
-  "data": false,
-  "timestamp": 1640995200000
+  "code": 200,
+  "message": "用户名检查完成",
+  "data": {
+    "exists": true,
+    "username": "admin"
+  }
 }
 ```
 
-**响应数据说明：**
-- `true`：邮箱已存在
-- `false`：邮箱不存在
-
-## 3. 系统健康检查接口
-
-### 3.1 健康检查
-
-**接口地址：** `GET /api/health`
-
-**接口描述：** 系统健康状态检查
-
-**成功响应：**
-
+#### 检查邮箱是否存在
+- **接口地址**: `GET /api/users/check-email/{email}`
+- **接口描述**: 检查邮箱是否已被使用
+- **权限要求**: 无需认证
+- **路径参数**:
+  - `email`: 邮箱地址
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
+  "code": 200,
+  "message": "邮箱检查完成",
+  "data": {
+    "exists": false,
+    "email": "test@example.com"
+  }
+}
+```
+
+### 3. 系统健康检查接口
+
+#### 健康检查
+- **接口地址**: `GET /api/health`
+- **接口描述**: 检查系统运行状态
+- **权限要求**: 无需认证
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "系统运行正常",
   "data": {
     "status": "UP",
-    "timestamp": "2024-01-20T14:25:00+08:00"
-  },
-  "timestamp": 1640995200000
+    "application": "wanli-backend",
+    "profile": "staging",
+    "timestamp": "2024-01-15T10:30:00.000Z",
+    "version": "1.0.0"
+  }
 }
 ```
 
-### 3.2 系统信息
-
-**接口地址：** `GET /api/info`
-
-**接口描述：** 获取系统基本信息
-
-**成功响应：**
-
+#### 系统信息
+- **接口地址**: `GET /api/health/info`
+- **接口描述**: 获取系统详细信息
+- **权限要求**: 需要认证，ADMIN角色
+- **成功响应**:
 ```json
 {
-  "success": true,
-  "code": "200",
-  "message": "操作成功",
+  "code": 200,
+  "message": "获取系统信息成功",
   "data": {
     "application": "wanli-backend",
-    "profile": "default",
     "version": "1.0.0",
+    "environment": "staging",
     "javaVersion": "17.0.2",
-    "osName": "Mac OS X",
-    "osVersion": "10.15.7",
-    "timestamp": "2024-01-20T14:25:00"
-  },
-  "timestamp": 1640995200000
+    "springBootVersion": "3.2.1",
+    "buildTime": "2024-01-15T08:00:00.000Z",
+    "uptime": "2h 30m 15s"
+  }
+}
+```
+
+### 4. 课程管理接口
+
+#### 创建课程
+- **接口地址**: `POST /api/courses`
+- **接口描述**: 创建新课程
+- **权限要求**: 需要认证，ADMIN或TEACHER角色
+- **请求参数**:
+```json
+{
+  "code": "MATH001",
+  "title": "小学数学基础",
+  "description": "适合一年级学生的数学基础课程",
+  "grade": "GRADE_1",
+  "subject": "MATH",
+  "institutionId": "550e8400-e29b-41d4-a716-446655440001"
+}
+```
+- **参数说明**:
+  - `code`: 课程编码，必填，最大20字符，唯一
+  - `title`: 课程标题，必填，最大100字符
+  - `description`: 课程描述，选填，最大500字符
+  - `grade`: 年级等级，必填，枚举值：GRADE_1到GRADE_6
+  - `subject`: 学科，必填，枚举值：CHINESE、MATH、ENGLISH
+  - `institutionId`: 所属机构ID，必填，UUID格式
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "课程创建成功",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "code": "MATH001",
+    "title": "小学数学基础",
+    "description": "适合一年级学生的数学基础课程",
+    "grade": "GRADE_1",
+    "subject": "MATH",
+    "status": "ACTIVE",
+    "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z",
+    "createdBy": "admin"
+  }
+}
+```
+
+#### 获取课程列表
+- **接口地址**: `GET /api/courses`
+- **接口描述**: 分页获取课程列表
+- **权限要求**: 需要认证
+- **请求参数**:
+  - `page`: 页码，默认0
+  - `size`: 页大小，默认10，最大100
+  - `grade`: 年级过滤，选填，枚举值：GRADE_1到GRADE_6
+  - `subject`: 学科过滤，选填，枚举值：CHINESE、MATH、ENGLISH
+  - `status`: 状态过滤，选填，枚举值：ACTIVE、INACTIVE、COMPLETED
+  - `institutionId`: 机构ID过滤，选填，UUID格式
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "获取课程列表成功",
+  "data": {
+    "content": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "code": "MATH001",
+        "title": "小学数学基础",
+        "description": "适合一年级学生的数学基础课程",
+        "grade": "GRADE_1",
+        "subject": "MATH",
+        "status": "ACTIVE",
+        "institutionId": "550e8400-e29b-41d4-a716-446655440001",
+        "createdAt": "2024-01-15T10:30:00.000Z",
+        "updatedAt": "2024-01-15T10:30:00.000Z",
+        "createdBy": "admin"
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 10
+    },
+    "totalElements": 1,
+    "totalPages": 1,
+    "first": true,
+    "last": true
+  }
+}
+```
+
+#### 获取课程详情
+- **接口地址**: `GET /api/courses/{id}`
+- **接口描述**: 根据ID获取课程详情
+- **权限要求**: 需要认证
+- **路径参数**:
+  - `id`: 课程ID，UUID格式
+- **成功响应**: 同创建课程响应
+
+#### 更新课程信息
+- **接口地址**: `PUT /api/courses/{id}`
+- **接口描述**: 更新课程信息
+- **权限要求**: 需要认证，ADMIN或TEACHER角色
+- **路径参数**:
+  - `id`: 课程ID，UUID格式
+- **请求参数**: 同创建课程
+- **成功响应**: 同创建课程响应
+
+#### 删除课程
+- **接口地址**: `DELETE /api/courses/{id}`
+- **接口描述**: 删除课程（软删除）
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `id`: 课程ID，UUID格式
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "课程删除成功",
+  "data": null
+}
+```
+
+#### 切换课程状态
+- **接口地址**: `PATCH /api/courses/{id}/status`
+- **接口描述**: 切换课程状态（激活/停用）
+- **权限要求**: 需要认证，ADMIN或TEACHER角色
+- **路径参数**:
+  - `id`: 课程ID，UUID格式
+- **请求参数**:
+```json
+{
+  "status": "INACTIVE"
+}
+```
+- **参数说明**:
+  - `status`: 课程状态，必填，枚举值：ACTIVE、INACTIVE、COMPLETED
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "课程状态更新成功",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "INACTIVE"
+  }
+}
+```
+
+### 5. 机构管理接口
+
+#### 创建机构
+- **接口地址**: `POST /api/institutions`
+- **接口描述**: 创建新机构
+- **权限要求**: 需要认证，ADMIN角色
+- **请求参数**:
+```json
+{
+  "name": "万里教育机构",
+  "description": "专注于小学教育的优质机构",
+  "contactEmail": "contact@wanli.edu",
+  "contactPhone": "13800138000",
+  "address": "北京市朝阳区教育大街123号"
+}
+```
+- **参数说明**:
+  - `name`: 机构名称，必填，最大100字符，唯一
+  - `description`: 机构描述，选填，最大500字符
+  - `contactEmail`: 联系邮箱，必填，标准邮箱格式
+  - `contactPhone`: 联系电话，必填，11位数字
+  - `address`: 机构地址，选填，最大200字符
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "机构创建成功",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "万里教育机构",
+    "description": "专注于小学教育的优质机构",
+    "contactEmail": "contact@wanli.edu",
+    "contactPhone": "13800138000",
+    "address": "北京市朝阳区教育大街123号",
+    "status": "ACTIVE",
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z",
+    "createdBy": "admin"
+  }
+}
+```
+
+#### 获取机构详情
+- **接口地址**: `GET /api/institutions/{id}`
+- **接口描述**: 根据ID获取机构详情
+- **权限要求**: 需要认证
+- **路径参数**:
+  - `id`: 机构ID，UUID格式
+- **成功响应**: 同创建机构响应
+
+#### 获取机构列表
+- **接口地址**: `GET /api/institutions`
+- **接口描述**: 分页获取机构列表
+- **权限要求**: 需要认证
+- **请求参数**:
+  - `page`: 页码，默认0
+  - `size`: 页大小，默认10，最大100
+  - `status`: 状态过滤，选填，枚举值：ACTIVE、INACTIVE、SUSPENDED
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "获取机构列表成功",
+  "data": {
+    "content": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name": "万里教育机构",
+        "description": "专注于小学教育的优质机构",
+        "contactEmail": "contact@wanli.edu",
+        "contactPhone": "13800138000",
+        "address": "北京市朝阳区教育大街123号",
+        "status": "ACTIVE",
+        "createdAt": "2024-01-15T10:30:00.000Z",
+        "updatedAt": "2024-01-15T10:30:00.000Z",
+        "createdBy": "admin"
+      }
+    ],
+    "pageable": {
+      "pageNumber": 0,
+      "pageSize": 10
+    },
+    "totalElements": 1,
+    "totalPages": 1,
+    "first": true,
+    "last": true
+  }
+}
+```
+
+#### 更新机构信息
+- **接口地址**: `PUT /api/institutions/{id}`
+- **接口描述**: 更新机构信息
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `id`: 机构ID，UUID格式
+- **请求参数**: 同创建机构
+- **成功响应**: 同创建机构响应
+
+#### 更新机构状态
+- **接口地址**: `PATCH /api/institutions/{id}/status`
+- **接口描述**: 更新机构状态
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `id`: 机构ID，UUID格式
+- **请求参数**:
+```json
+{
+  "status": "INACTIVE"
+}
+```
+- **参数说明**:
+  - `status`: 机构状态，必填，枚举值：ACTIVE、INACTIVE、SUSPENDED
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "机构状态更新成功",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "INACTIVE"
+  }
+}
+```
+
+#### 删除机构
+- **接口地址**: `DELETE /api/institutions/{id}`
+- **接口描述**: 删除机构（软删除）
+- **权限要求**: 需要认证，ADMIN角色
+- **路径参数**:
+  - `id`: 机构ID，UUID格式
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "机构删除成功",
+  "data": null
+}
+```
+
+#### 获取活跃机构列表
+- **接口地址**: `GET /api/institutions/active`
+- **接口描述**: 获取所有活跃状态的机构列表
+- **权限要求**: 需要认证
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "获取活跃机构列表成功",
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "万里教育机构",
+      "description": "专注于小学教育的优质机构",
+      "contactEmail": "contact@wanli.edu",
+      "contactPhone": "13800138000",
+      "address": "北京市朝阳区教育大街123号",
+      "status": "ACTIVE",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z",
+      "createdBy": "admin"
+    }
+  ]
+}
+```
+
+#### 获取机构统计信息
+- **接口地址**: `GET /api/institutions/statistics`
+- **接口描述**: 获取机构统计信息
+- **权限要求**: 需要认证，ADMIN角色
+- **成功响应**:
+```json
+{
+  "code": 200,
+  "message": "获取机构统计信息成功",
+  "data": {
+    "totalInstitutions": 10,
+    "activeInstitutions": 8,
+    "inactiveInstitutions": 1,
+    "suspendedInstitutions": 1
+  }
 }
 ```
 
 ## 错误码说明
 
 ### 通用错误码
-
-| 错误码 | HTTP状态码 | 描述 |
-|---|---|---|
-| 200 | 200 | 操作成功 |
-| 400 | 400 | 请求参数错误 |
-| 401 | 401 | 未授权访问 |
-| 403 | 403 | 权限不足 |
-| 404 | 404 | 资源不存在 |
-| 500 | 500 | 系统内部错误 |
+- `400`: 请求参数错误
+- `401`: 未认证或令牌无效
+- `403`: 权限不足
+- `404`: 资源不存在
+- `409`: 资源冲突（如用户名已存在）
+- `500`: 服务器内部错误
 
 ### 业务错误码
-
-| 错误码 | HTTP状态码 | 描述 |
-|---|---|---|
-| USER_001 | 400 | 用户名已存在 |
-| USER_002 | 400 | 邮箱已存在 |
-| USER_003 | 404 | 用户不存在 |
-| USER_004 | 400 | 密码无效 |
-| USER_005 | 400 | 用户账户已锁定 |
-| AUTH_001 | 401 | 认证失败 |
-| AUTH_002 | 401 | JWT令牌无效 |
-| AUTH_003 | 401 | JWT令牌已过期 |
-| VALIDATION_001 | 400 | 参数验证失败 |
-| DATABASE_001 | 500 | 数据库操作失败 |
-| SYSTEM_001 | 500 | 系统内部错误 |
+- `1001`: 用户名已存在
+- `1002`: 邮箱已存在
+- `1003`: 用户不存在
+- `1004`: 密码错误
+- `1005`: 用户状态异常
+- `2001`: 课程编码已存在
+- `2002`: 课程不存在
+- `2003`: 课程状态异常
+- `3001`: 机构名称已存在
+- `3002`: 机构不存在
+- `3003`: 机构状态异常
 
 ## 常见错误响应示例
 
-### 参数验证失败
-
+### 参数验证错误
 ```json
 {
-  "success": false,
-  "code": "VALIDATION_001",
-  "message": "参数验证失败: 用户名不能为空",
-  "data": null,
-  "timestamp": 1640995200000
+  "code": 400,
+  "message": "请求参数错误",
+  "data": {
+    "errors": [
+      {
+        "field": "username",
+        "message": "用户名长度必须在3-50个字符之间"
+      },
+      {
+        "field": "email",
+        "message": "邮箱格式不正确"
+      }
+    ]
+  }
 }
 ```
 
-### 用户不存在
-
+### 认证失败
 ```json
 {
-  "success": false,
-  "code": "USER_003",
-  "message": "用户不存在",
-  "data": null,
-  "timestamp": 1640995200000
+  "code": 401,
+  "message": "认证失败，请重新登录",
+  "data": null
 }
 ```
 
 ### 权限不足
-
 ```json
 {
-  "success": false,
-  "code": "403",
-  "message": "权限不足",
-  "data": null,
-  "timestamp": 1640995200000
+  "code": 403,
+  "message": "权限不足，无法访问该资源",
+  "data": null
 }
 ```
 
-### JWT令牌无效
-
+### 资源不存在
 ```json
 {
-  "success": false,
-  "code": "AUTH_002",
-  "message": "JWT令牌无效",
-  "data": null,
-  "timestamp": 1640995200000
+  "code": 404,
+  "message": "用户不存在",
+  "data": null
 }
 ```
 
-## 使用示例
+### 业务逻辑错误
+```json
+{
+  "code": 1001,
+  "message": "用户名已存在",
+  "data": {
+    "username": "admin"
+  }
+}
+```
+
+## API 使用示例
 
 ### 用户注册和登录流程
 
-1. **用户注册**
-
+1. **注册新用户**
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST https://wanli-backend-staging-staging.up.railway.app/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "john_doe",
+    "username": "student001",
     "password": "password123",
-    "email": "john@example.com",
+    "email": "student001@example.com",
     "fullName": "张三",
+    "phone": "13800138001",
     "role": "STUDENT"
   }'
 ```
 
 2. **用户登录**
-
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST https://wanli-backend-staging-staging.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "john_doe",
+    "username": "student001",
     "password": "password123"
   }'
 ```
 
-3. **获取当前用户信息**
-
+3. **获取用户信息**
 ```bash
-curl -X GET http://localhost:8080/api/auth/me \
+curl -X GET https://wanli-backend-staging-staging.up.railway.app/api/auth/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 4. **用户登出**
-
 ```bash
-curl -X POST http://localhost:8080/api/auth/logout \
+curl -X POST https://wanli-backend-staging-staging.up.railway.app/api/auth/logout \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
 ### 管理员操作示例
 
-1. **创建用户（管理员）**
-
+1. **获取所有用户**
 ```bash
-curl -X POST http://localhost:8080/users \
+curl -X GET "https://wanli-backend-staging-staging.up.railway.app/api/users?page=0&size=10" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+2. **创建课程**
+```bash
+curl -X POST https://wanli-backend-staging-staging.up.railway.app/api/courses \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <admin-jwt-token>" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -d '{
-    "username": "teacher01",
-    "password": "teacher123",
-    "email": "teacher@example.com",
-    "fullName": "王老师",
-    "role": "HQ_TEACHER"
+    "code": "MATH001",
+    "title": "小学数学基础",
+    "description": "适合一年级学生的数学基础课程",
+    "grade": "GRADE_1",
+    "subject": "MATH",
+    "institutionId": "550e8400-e29b-41d4-a716-446655440001"
   }'
 ```
 
-2. **获取所有用户（管理员）**
-
+3. **创建机构**
 ```bash
-curl -X GET http://localhost:8080/users \
-  -H "Authorization: Bearer <admin-jwt-token>"
-```
-
-3. **更新用户信息（管理员）**
-
-```bash
-curl -X PUT http://localhost:8080/users/550e8400-e29b-41d4-a716-446655440000 \
+curl -X POST https://wanli-backend-staging-staging.up.railway.app/api/institutions \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <admin-jwt-token>" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -d '{
-    "email": "newemail@example.com",
-    "fullName": "新姓名",
-    "role": "HQ_TEACHER"
+    "name": "万里教育机构",
+    "description": "专注于小学教育的优质机构",
+    "contactEmail": "contact@wanli.edu",
+    "contactPhone": "13800138000",
+    "address": "北京市朝阳区教育大街123号"
   }'
 ```
+
+## 环境接入配置
+
+### Staging 环境接入
+
+**基础配置**:
+- 基础URL: `https://wanli-backend-staging-staging.up.railway.app/api`
+- 数据库: Railway PostgreSQL (自动配置)
+- 认证方式: JWT Bearer Token
+- 内容类型: `application/json`
+
+**环境变量**:
+```bash
+# 数据库配置（Railway自动注入）
+SPRING_DATASOURCE_URL=jdbc:postgresql://...
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=...
+
+# JWT配置
+JWT_SECRET=stagingSecretKeyForWanliEducationBackendSystem2024
+JWT_ACCESS_TOKEN_EXPIRATION=3600000
+JWT_REFRESH_TOKEN_EXPIRATION=7200000
+
+# 应用配置
+SPRING_PROFILES_ACTIVE=staging
+PORT=8080
+APP_VERSION=1.0.0
+```
+
+**健康检查**:
+- 端点: `GET /api/health`
+- 预期响应: HTTP 200
+- 检查间隔: 30秒
+
+### Production 环境接入
+
+**基础配置**:
+- 基础URL: `https://your-production-domain.com/api`
+- 数据库: 生产环境PostgreSQL
+- 认证方式: JWT Bearer Token
+- 内容类型: `application/json`
+- SSL/TLS: 强制HTTPS
+
+**环境变量**:
+```bash
+# 数据库配置
+SPRING_DATASOURCE_URL=jdbc:postgresql://prod-db-host:5432/wanli_backend_prod
+SPRING_DATASOURCE_USERNAME=prod_user
+SPRING_DATASOURCE_PASSWORD=secure_prod_password
+
+# JWT配置（生产环境使用更强的密钥）
+JWT_SECRET=productionSecretKeyForWanliEducationBackendSystem2024WithHighSecurity
+JWT_ACCESS_TOKEN_EXPIRATION=3600000
+JWT_REFRESH_TOKEN_EXPIRATION=7200000
+
+# 应用配置
+SPRING_PROFILES_ACTIVE=production
+PORT=8080
+APP_VERSION=1.0.0
+```
+
+**安全配置**:
+- 启用HTTPS重定向
+- 配置CORS策略
+- 启用请求限流
+- 配置日志审计
+
+**监控配置**:
+- 健康检查: `GET /api/health`
+- 系统信息: `GET /api/health/info` (需要管理员权限)
+- 日志级别: WARN
+- 错误报告: 集成错误监控服务
 
 ## 注意事项
 
-1. **安全性**
-   - 所有密码在传输和存储时都经过加密处理
-   - JWT令牌有过期时间，需要定期刷新
-   - 敏感操作需要相应的权限验证
+### 安全性
+- 所有需要认证的接口都需要在请求头中携带有效的JWT令牌
+- JWT令牌格式：`Authorization: Bearer <token>`
+- 令牌过期时间为1小时（访问令牌）/ 2小时（刷新令牌）
+- 生产环境强制使用HTTPS协议
+- 敏感操作需要管理员权限验证
 
-2. **数据格式**
-   - 所有时间字段采用ISO 8601格式，包含时区信息
-   - UUID字段采用标准的36字符格式
-   - 所有字符串字段都支持UTF-8编码
+### 数据格式
+- 所有时间字段使用ISO 8601格式：`YYYY-MM-DDTHH:mm:ss.SSSZ`
+- 所有ID字段使用UUID格式
+- 分页查询默认页大小为10，最大页大小为100
+- 请求和响应均使用UTF-8编码
 
-3. **限制说明**
-   - 用户名和邮箱在系统中必须唯一
-   - 密码长度和复杂度有相应要求
-   - 部分接口需要特定角色权限才能访问
+### 枚举值说明
+- **年级等级**: GRADE_1(一年级), GRADE_2(二年级), GRADE_3(三年级), GRADE_4(四年级), GRADE_5(五年级), GRADE_6(六年级)
+- **学科**: CHINESE(语文), MATH(数学), ENGLISH(英语)
+- **用户角色**: ADMIN(管理员), TEACHER(教师), STUDENT(学生)
+- **状态枚举**: ACTIVE(活跃), INACTIVE(非活跃), SUSPENDED(暂停)
 
-4. **最佳实践**
-   - 建议在生产环境中使用HTTPS协议
-   - 客户端应妥善保存和管理JWT令牌
-   - 定期检查和更新用户权限设置
+### 限制说明
+- 用户名长度：3-50个字符，只能包含字母、数字和下划线
+- 密码长度：6-100个字符
+- 邮箱格式必须符合标准邮箱格式
+- 手机号格式：11位数字
+- 课程编码长度：最大20字符，必须唯一
+- 课程标题长度：最大100字符
+- 机构名称长度：最大100字符，必须唯一
+
+### 最佳实践
+- 建议在生产环境中使用HTTPS协议
+- 建议实现客户端令牌自动刷新机制
+- 建议对敏感操作进行二次确认
+- 建议实现适当的错误重试机制
+- 建议在创建课程时指定所属机构
+- 建议定期检查机构状态，及时处理异常机构
+- 建议实现客户端请求缓存以提高性能
+- 建议使用连接池管理数据库连接
+
+### 版本控制
+- API版本通过URL路径管理（当前版本：v1，路径：/api）
+- 向后兼容性：新版本发布时保持向后兼容
+- 废弃通知：废弃的接口会提前通知并保持6个月的兼容期
 
 ---
 
-**文档版本：** 1.0.0  
+**文档版本：** 2.0.0  
 **最后更新：** 2024年1月20日  
-**联系方式：** 如有问题请联系开发团队
+**维护团队：** 万里教育技术团队  
+**联系方式：** 如有问题请联系开发团队或提交GitHub Issue
