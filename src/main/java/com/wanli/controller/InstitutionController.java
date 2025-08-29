@@ -51,6 +51,9 @@ public class InstitutionController {
             Institution institution = new Institution();
             BeanUtils.copyProperties(createDTO, institution);
             
+            // 设置创建者信息（临时使用固定值，实际应从认证上下文获取）
+            institution.setCreatedBy("admin");
+            
             // 创建机构
             Institution createdInstitution = institutionService.createInstitution(institution);
             

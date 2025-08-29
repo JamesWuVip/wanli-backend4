@@ -51,6 +51,11 @@ public class InstitutionServiceImpl implements InstitutionService {
             institution.setStatus(InstitutionStatus.ACTIVE);
         }
         
+        // 确保创建者信息不为空
+        if (institution.getCreatedBy() == null || institution.getCreatedBy().trim().isEmpty()) {
+            institution.setCreatedBy("system");
+        }
+        
         Institution savedInstitution = institutionRepository.save(institution);
         log.info("Institution created successfully with ID: {}", savedInstitution.getId());
         

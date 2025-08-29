@@ -53,15 +53,16 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserDetails createUserPrincipal(User user) {
         Collection<? extends GrantedAuthority> authorities = getAuthorities(user);
         
-        return org.springframework.security.core.userdetails.User.builder()
-                .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .authorities(authorities)
-                .accountExpired(false)
-                .accountLocked(user.isLocked())
-                .credentialsExpired(false)
-                .disabled(user.getStatus() != UserStatus.ACTIVE)
-                .build();
+        return new CustomUserDetails(
+                user.getUsername(),
+                user.getPasswordHash(),
+                user.getStatus() == UserStatus.ACTIVE, // enabled
+                true, // accountNonExpired
+                true, // credentialsNonExpired
+                !user.isLocked(), // accountNonLocked
+                authorities,
+                user.getId()
+        );
     }
     
     /**
