@@ -1,15 +1,18 @@
 package com.wanli.service.impl;
 
 import com.wanli.config.JwtUtil;
+import com.wanli.dto.ChangePasswordDto;
 import com.wanli.dto.LoginRequestDto;
 import com.wanli.dto.LoginResponseDto;
 import com.wanli.dto.UserRegistrationDto;
 import com.wanli.dto.UserResponseDto;
+import com.wanli.dto.UserUpdateDto;
 import com.wanli.entity.User;
 import com.wanli.entity.UserStatus;
 import com.wanli.exception.user.InvalidPasswordException;
 import com.wanli.exception.user.UserNotFoundException;
 import com.wanli.service.AuthService;
+import com.wanli.service.TokenBlacklistService;
 import com.wanli.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
+    private final TokenBlacklistService tokenBlacklistService;
     
     @Override
     public UserResponseDto register(UserRegistrationDto registrationDto) {
@@ -95,22 +99,19 @@ public class AuthServiceImpl implements AuthService {
                     .username(user.getUsername())
                     .email(user.getEmail())
                     .fullName(user.getFullName())
-                    .role(user.getRole().name())
-                    .lastLoginAt(user.getLastLoginAt())
+                    .role(user.getRole())
+                    .status(user.getStatus())
                     .build();
             
             return LoginResponseDto.builder()
-                    .accessToken(token)
-                    .tokenType("Bearer")
-                    .expiresIn(jwtUtil.getExpirationTime())
-                    .user(userInfo)
+                    .token(token)
+                    .userInfo(userInfo)
                     .build();
             
         } catch (AuthenticationException e) {
             // 处理登录失败
             userService.handleLoginFailure(loginRequest.getUsername());
-            log.warn("Login failed for user: {}, reason: {}", loginRequest.getUsername(), e.getMessage());
-            throw new InvalidPasswordException("用户名或密码错误");
+            throw new BadCredentialsException("用户名或密码错误");
         }
     }
     
@@ -119,21 +120,49 @@ public class AuthServiceImpl implements AuthService {
     public UserResponseDto getCurrentUser(String username) {
         User user = userService.findByUsername(username)
                 .orElseThrow(() -> new UserNotFoundException(username));
-        
         return convertToUserResponseDto(user);
     }
     
     @Override
+    @Transactional
+    public UserResponseDto updateProfile(String username, UserUpdateDto userUpdateDto) {
+        User updatedUser = userService.updateProfile(username, userUpdateDto);
+        return convertToUserResponseDto(updatedUser);
+    }
+    
+    @Override
+    @Transactional
+    public void changePassword(String username, ChangePasswordDto changePasswordDto) {
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException(username));
+        
+        // 验证新密码和确认密码是否一致
+        if (!changePasswordDto.getNewPassword().equals(changePasswordDto.getConfirmPassword())) {
+            throw new IllegalArgumentException("新密码和确认密码不一致");
+        }
+        
+        userService.changePassword(user.getId(), 
+                changePasswordDto.getOldPassword(), 
+                changePasswordDto.getNewPassword());
+    }
+    
+    @Override
     public void logout(String token) {
-        // TODO: 实现Token黑名单机制
-        // 可以将Token加入Redis黑名单，在JWT过滤器中检查
-        log.info("User logged out, token will be invalidated");
+        if (token != null && !token.trim().isEmpty()) {
+            tokenBlacklistService.blacklistToken(token);
+            log.info("User logged out, token added to blacklist");
+        } else {
+            log.info("User logged out without token");
+        }
     }
     
     /**
      * 转换User实体为UserResponseDto
      */
     private UserResponseDto convertToUserResponseDto(User user) {
+        // 直接使用OffsetDateTime，无需转换
+        OffsetDateTime createdAt = user.getCreatedAt();
+            
         return UserResponseDto.builder()
                 .userId(user.getId())
                 .username(user.getUsername())
@@ -141,7 +170,7 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .status(user.getStatus())
-                .createdAt(user.getCreatedAt())
+                .createdAt(createdAt)
                 .lastLoginAt(user.getLastLoginAt())
                 .isActive(user.getStatus() == UserStatus.ACTIVE)
                 .build();
